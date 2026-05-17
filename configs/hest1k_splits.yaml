@@ -1,0 +1,34 @@
+seed: 2026
+
+input:
+  metadata_csv: data/HEST-1k/HEST_v1_3_0.csv
+  manifest: data/HEST-1k/manifests/human_visium_sf_manifest.csv
+
+filters:
+  species: "Homo sapiens"
+  st_technology: "Visium"
+  min_spots_under_tissue: 200
+
+leave_slide_out:
+  train_fraction: 0.70
+  val_fraction: 0.10
+  test_fraction: 0.20
+  stratify_columns: ["organ", "dataset_title"]
+
+leave_organ_out:
+  organs:
+    - Breast
+    - Bowel
+    - Skin
+    - Lung
+    - Kidney
+    - Heart
+    - Prostate
+    - Brain
+
+leave_cohort_out:
+  cohort_column: dataset_title
+  min_test_slides: 5
+
+output:
+  split_dir: data/HEST-1k/splits

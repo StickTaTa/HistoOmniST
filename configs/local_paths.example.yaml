@@ -1,0 +1,13 @@
+# Copy this file to configs/local_paths.yaml and edit paths for your machine.
+old_project_root: ""
+new_project_root: "."
+manuscript_root: ""
+data_root: "data"
+output_root: "results"
+figure_root: "figures"
+checkpoint_root: "checkpoints"
+run_root: "runs"
+hest1k_root: "data/HEST-1k"
+hest1k_metadata_csv: "data/HEST-1k/HEST_v1_3_0.csv"
+hest1k_raw_root: "data/HEST-1k/raw"
+hest1k_processed_root: "data/HEST-1k/processed"

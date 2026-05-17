@@ -1,0 +1,27 @@
+﻿dpi: 600
+formats: ["png", "pdf", "svg"]
+font_family: "Arial"
+font_fallback: ["Arial", "Helvetica", "DejaVu Sans"]
+title_fontsize: 9
+axis_label_fontsize: 8
+tick_fontsize: 7
+legend_fontsize: 7
+figure_width: 6.85
+figure_height: 3.5
+save_source_data: true
+axes_linewidth: 0.8
+tick_width: 0.7
+grid_color: "#E4E4E4"
+text_color: "#202020"
+palette:
+  HistoOmniST: "#00A087"
+  Morpho-FM: "#E64B35"
+  iStar: "#4DBBD5"
+  sCellST: "#3C5488"
+  HiST: "#F39B7F"
+  mclSTExp: "#8491B4"
+  HisToGene: "#91D1C2"
+  No SF: "#8D8D8D"
+  Predicted SF: "#4DBBD5"
+  True SF oracle: "#E64B35"
+

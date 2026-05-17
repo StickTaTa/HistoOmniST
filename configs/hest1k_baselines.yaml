@@ -1,0 +1,21 @@
+seed: 2026
+
+input:
+  manifest: data/HEST-1k/manifests/human_visium_sf_manifest.csv
+  split_dir: data/HEST-1k/splits
+
+baselines:
+  - constant_sf
+  - tissue_area_fraction
+  - rgb_linear
+  - hipt_ridge
+  - hipt_mlp
+  - organ_conditioned_hipt_mlp
+
+notes:
+  tissue_area_fraction: "Requires per-spot tissue area features in the processed table."
+  rgb_linear: "Requires mean/std RGB features or stain features."
+  nuclei_density: "Deferred until nuclei segmentation features are available."
+
+output:
+  root: results/hest1k_human_visium_sf/baselines
