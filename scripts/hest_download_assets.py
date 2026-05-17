@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-from huggingface_hub import HfApi, hf_hub_download
+from huggingface_hub import HfApi, snapshot_download
 from huggingface_hub.hf_api import RepoFile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,6 +50,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-slides", type=int, default=None)
     parser.add_argument("--out-csv", type=Path, default=Path("data/HEST-1k/manifests/hest_download_plan.csv"))
     parser.add_argument("--download", action="store_true", help="Actually download files. Without this flag, only plans.")
+    parser.add_argument("--workers", type=int, default=8, help="Parallel download workers for Hugging Face snapshot_download.")
     parser.add_argument("--token", default=None, help="Hugging Face token. Prefer HF_TOKEN env var or hf auth login.")
     parser.add_argument("--token-file", type=Path, default=None, help="File containing a Hugging Face token.")
     return parser.parse_args()
@@ -166,17 +167,16 @@ def main() -> None:
 
     token = resolve_token(args)
     raw_root.mkdir(parents=True, exist_ok=True)
-    for row in plan.itertuples(index=False):
-        if row.already_downloaded:
-            continue
-        print(f"downloading {row.path}")
-        hf_hub_download(
+    paths_to_download = plan.loc[~plan["already_downloaded"], "path"].tolist()
+    if paths_to_download:
+        snapshot_download(
             repo_id=args.repo_id,
             repo_type="dataset",
             revision=args.revision,
-            filename=row.path,
+            allow_patterns=paths_to_download,
             local_dir=raw_root,
             token=token,
+            max_workers=args.workers,
         )
     print("download_complete=true")
 
