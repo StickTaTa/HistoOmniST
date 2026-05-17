@@ -1,422 +1,422 @@
 sample_id,organ,platform,dataset_title,n_spots_metadata,n_genes_metadata,has_features,has_counts,has_coords,has_size_factor,ready_for_training
-NCBI600,Bladder,Visium,"A new epithelial cell subpopulation predicts response to surgery, chemotherapy, and immunotherapy in bladder cancer",832,33538,False,True,True,True,False
-NCBI601,Bladder,Visium,"A new epithelial cell subpopulation predicts response to surgery, chemotherapy, and immunotherapy in bladder cancer",1469,33538,False,True,True,True,False
-NCBI602,Bladder,Visium,"A new epithelial cell subpopulation predicts response to surgery, chemotherapy, and immunotherapy in bladder cancer",1017,33538,False,True,True,True,False
-NCBI603,Bladder,Visium,"A new epithelial cell subpopulation predicts response to surgery, chemotherapy, and immunotherapy in bladder cancer",768,33538,False,True,True,True,False
-NCBI854,Bladder,Visium,Batf3-dendritic cells and 4-1BB-4-1BB ligand axis are required at the effector phase within the tumor microenvironment for PD-1-PD-L1 blockade efficacy,699,17943,False,True,True,True,False
-NCBI855,Bladder,Visium,Batf3-dendritic cells and 4-1BB-4-1BB ligand axis are required at the effector phase within the tumor microenvironment for PD-1-PD-L1 blockade efficacy,1432,17943,False,True,True,True,False
-MISC33,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3385,18729,False,True,True,True,False
-MISC34,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3731,19276,False,True,True,True,False
-MISC35,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3578,19061,False,True,True,True,False
-MISC36,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3502,19119,False,True,True,True,False
-MISC37,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3636,19396,False,True,True,True,False
-MISC38,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,1727,19366,False,True,True,True,False
-MISC39,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4078,19234,False,True,True,True,False
-MISC40,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4116,19352,False,True,True,True,False
-MISC41,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3708,19255,False,True,True,True,False
-MISC42,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,659,19304,False,True,True,True,False
-MISC43,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,1186,19121,False,True,True,True,False
-MISC44,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,932,18518,False,True,True,True,False
-MISC45,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4118,19270,False,True,True,True,False
-MISC46,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4511,19337,False,True,True,True,False
-MISC47,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4818,19327,False,True,True,True,False
-MISC48,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3577,19111,False,True,True,True,False
-MISC49,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4624,19330,False,True,True,True,False
-MISC50,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4297,18776,False,True,True,True,False
-MISC51,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3076,19174,False,True,True,True,False
-MISC52,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,229,19284,False,True,True,True,False
-MISC53,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,818,19315,False,True,True,True,False
-MISC54,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,668,19266,False,True,True,True,False
-MISC55,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,863,19175,False,True,True,True,False
-MISC56,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3395,19338,False,True,True,True,False
-MISC57,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,989,19165,False,True,True,True,False
-MISC58,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,1165,19259,False,True,True,True,False
-MISC59,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,1312,19305,False,True,True,True,False
-MISC60,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,1014,19255,False,True,True,True,False
-MISC61,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,2047,19343,False,True,True,True,False
-MISC62,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4132,19391,False,True,True,True,False
-MISC63,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3467,19346,False,True,True,True,False
-MISC64,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,2533,19411,False,True,True,True,False
-MISC65,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3261,19402,False,True,True,True,False
-MISC66,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3970,19347,False,True,True,True,False
-MISC67,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,2551,19384,False,True,True,True,False
-MISC68,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,2708,19359,False,True,True,True,False
-MISC69,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3634,19263,False,True,True,True,False
-MISC70,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3934,19116,False,True,True,True,False
-MISC71,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,2997,19251,False,True,True,True,False
-MISC72,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4369,19310,False,True,True,True,False
-MISC73,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3901,19074,False,True,True,True,False
-TENX152,Bowel,Visium,Characterization of immune cell populations in the tumor microenvironment of colorectal cancer using high definition spatial profiling,4269,18085,False,True,True,True,False
-ZEN36,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1691,36601,False,True,True,True,False
-ZEN37,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1656,36601,False,True,True,True,False
-ZEN38,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,387,36601,False,True,True,True,False
-ZEN39,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1219,36601,False,True,True,True,False
-ZEN40,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,2128,36601,False,True,True,True,False
-ZEN41,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1685,36601,False,True,True,True,False
-ZEN42,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1192,36601,False,True,True,True,False
-ZEN43,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,691,36601,False,True,True,True,False
-ZEN44,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1048,36601,False,True,True,True,False
-ZEN45,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,328,36601,False,True,True,True,False
-ZEN46,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1803,36601,False,True,True,True,False
-ZEN47,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,2317,36601,False,True,True,True,False
-ZEN48,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,2385,36601,False,True,True,True,False
-ZEN49,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,2203,36601,False,True,True,True,False
-TENX70,Bowel,Visium,"Human Colorectal Cancer, 11 mm Capture Area (FFPE)",9080,18085,False,True,True,True,False
-TENX28,Bowel,Visium,"Human Colorectal Cancer: Targeted, Gene Signature Panel",3138,1142,False,True,True,True,False
-TENX29,Bowel,Visium,Human Colorectal Cancer: Whole Transcriptome Analysis,3138,36601,False,True,True,True,False
-TENX49,Bowel,Visium,Human Intestine Cancer (FPPE),2660,17943,False,True,True,True,False
-MEND33,Bowel,Visium,"Human ileum, Visium",3291,33538,False,True,True,True,False
-MEND34,Bowel,Visium,"Human ileum, Visium",3294,33538,False,True,True,True,False
-MEND35,Bowel,Visium,"Human ileum, Visium",3320,33538,False,True,True,True,False
-MEND36,Bowel,Visium,"Human ileum, Visium",3214,33538,False,True,True,True,False
-MEND91,Bowel,Visium,Spatially resolved transcriptomic profiling of degraded,1154,17943,False,True,True,True,False
-MEND92,Bowel,Visium,Spatially resolved transcriptomic profiling of degraded,1071,17943,False,True,True,True,False
-MEND93,Bowel,Visium,Spatially resolved transcriptomic profiling of degraded,3742,17943,False,True,True,True,False
-MEND95,Bowel,Visium,Spatially resolved transcriptomic profiling of degraded,1738,36601,False,True,True,True,False
-MEND96,Bowel,Visium,Spatially resolved transcriptomic profiling of degraded,3360,17943,False,True,True,True,False
-TENX89,Bowel,Visium,Visium CytAssist Gene Expression Libraries of Post-Xenium Human Colon Cancer (FFPE),6414,18085,False,True,True,True,False
-TENX90,Bowel,Visium,Visium CytAssist Gene Expression Libraries of Post-Xenium Human Colon Cancer (FFPE),6487,18085,False,True,True,True,False
-TENX91,Bowel,Visium,Visium CytAssist Gene Expression Libraries of Post-Xenium Human Colon Cancer (FFPE),6352,18085,False,True,True,True,False
-TENX92,Bowel,Visium,Visium CytAssist Gene Expression Libraries of Post-Xenium Human Colon Cancer (FFPE),6518,18085,False,True,True,True,False
-TENX73,Brain,Visium,"Human Brain Cancer, 11 mm Capture Area (FFPE)",10878,18085,False,True,True,True,False
-TENX56,Brain,Visium,"Human Cerebellum: Targeted, Neuroscience Panel",4992,1186,False,True,True,True,False
-TENX27,Brain,Visium,Human Cerebellum: Whole Transcriptome Analysis,4992,1186,False,True,True,True,False
-TENX30,Brain,Visium,"Human Glioblastoma: Targeted, Pan-Cancer Panel",3468,1253,False,True,True,True,False
-TENX31,Brain,Visium,Human Glioblastoma: Whole Transcriptome Analysis,3468,36601,False,True,True,True,False
-NCBI653,Brain,Visium,Spatial Multimodal Analysis: MALDI-MSI and Spatial Transcriptomics within the same tissue section,4633,17943,False,True,True,True,False
-NCBI654,Brain,Visium,Spatial Multimodal Analysis: MALDI-MSI and Spatial Transcriptomics within the same tissue section,4868,17943,False,True,True,True,False
-NCBI655,Brain,Visium,Spatial Multimodal Analysis: MALDI-MSI and Spatial Transcriptomics within the same tissue section,4984,17943,False,True,True,True,False
-NCBI656,Brain,Visium,Spatial Multimodal Analysis: MALDI-MSI and Spatial Transcriptomics within the same tissue section,4968,17943,False,True,True,True,False
-NCBI657,Brain,Visium,Spatial Multimodal Analysis: MALDI-MSI and Spatial Transcriptomics within the same tissue section,3900,36601,False,True,True,True,False
-NCBI628,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,1262,36601,False,True,True,True,False
-NCBI629,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,3620,36601,False,True,True,True,False
-NCBI630,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,2961,36601,False,True,True,True,False
-NCBI631,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,2051,36601,False,True,True,True,False
-NCBI632,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,2743,36601,False,True,True,True,False
-NCBI633,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,3153,36601,False,True,True,True,False
-NCBI634,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,1842,36601,False,True,True,True,False
-NCBI635,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,3027,36601,False,True,True,True,False
-NCBI636,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,1616,36601,False,True,True,True,False
-NCBI637,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,2705,36601,False,True,True,True,False
-NCBI638,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,3060,36601,False,True,True,True,False
-NCBI639,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,979,36601,False,True,True,True,False
-NCBI640,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,1959,36601,False,True,True,True,False
-NCBI641,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,2236,36601,False,True,True,True,False
-MEND63,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1433,17943,False,True,True,True,False
-MEND64,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1943,17943,False,True,True,True,False
-MEND65,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1323,17943,False,True,True,True,False
-MEND66,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1238,17943,False,True,True,True,False
-MEND67,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1702,36601,False,True,True,True,False
-MEND68,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1490,36601,False,True,True,True,False
-MISC1,Brain,Visium,spatialLIBD,3460,33538,False,True,True,True,False
-MISC10,Brain,Visium,spatialLIBD,4789,33538,False,True,True,True,False
-MISC11,Brain,Visium,spatialLIBD,4384,33538,False,True,True,True,False
-MISC12,Brain,Visium,spatialLIBD,4226,33538,False,True,True,True,False
-MISC2,Brain,Visium,spatialLIBD,3592,33538,False,True,True,True,False
-MISC3,Brain,Visium,spatialLIBD,3673,33538,False,True,True,True,False
-MISC4,Brain,Visium,spatialLIBD,3639,33538,False,True,True,True,False
-MISC5,Brain,Visium,spatialLIBD,4015,33538,False,True,True,True,False
-MISC6,Brain,Visium,spatialLIBD,4110,33538,False,True,True,True,False
-MISC7,Brain,Visium,spatialLIBD,3498,33538,False,True,True,True,False
-MISC8,Brain,Visium,spatialLIBD,3661,33538,False,True,True,True,False
-MISC9,Brain,Visium,spatialLIBD,4634,33538,False,True,True,True,False
-TENX68,Breast,Visium,"Fresh Frozen Visium on CytAssist: Human Breast Cancer, Probe-Based Whole Transcriptome Profiling",1657,18085,False,True,True,True,False
-NCBI776,Breast,Visium,"High resolution mapping of the tumor microenvironment using integrated single-cell, spatial and in situ analysis [scRNA-seq and Visium]",4992,18085,False,True,True,True,False
-TENX13,Breast,Visium,Human Breast Cancer (Block A Section 1),3813,33538,False,True,True,True,False
-TENX14,Breast,Visium,Human Breast Cancer (Block A Section 2),4015,33538,False,True,True,True,False
-TENX39,Breast,Visium,"Human Breast Cancer: Ductal Carcinoma In Situ, Invasive Carcinoma (FFPE)",2518,17943,False,True,True,True,False
-TENX23,Breast,Visium,"Human Breast Cancer: Targeted, Immunology Panel",4325,1056,False,True,True,True,False
-TENX53,Breast,Visium,"Human Breast Cancer: Visium Fresh Frozen, Whole Transcriptome",4898,36601,False,True,True,True,False
-TENX24,Breast,Visium,Human Breast Cancer: Whole Transcriptome Analysis,4325,32285,False,True,True,True,False
-TENX50,Cervix,Visium,Human Cervical Cancer (FFPE),2781,17943,False,True,True,True,False
-NCBI1,Cervix,Visium,Spatiotemporally Deciphering the Unknown Role of Persistent HPV Infection in Precancer to Cervical Cancer Progression: Integrating Single-Cell RNA-Sequencing Landscape and Spatial Transcriptomics Atlas [Spatial Transcriptomics],1593,20615,False,True,True,True,False
-NCBI2,Cervix,Visium,Spatiotemporally Deciphering the Unknown Role of Persistent HPV Infection in Precancer to Cervical Cancer Progression: Integrating Single-Cell RNA-Sequencing Landscape and Spatial Transcriptomics Atlas [Spatial Transcriptomics],1757,20615,False,True,True,True,False
-NCBI3,Cervix,Visium,Spatiotemporally Deciphering the Unknown Role of Persistent HPV Infection in Precancer to Cervical Cancer Progression: Integrating Single-Cell RNA-Sequencing Landscape and Spatial Transcriptomics Atlas [Spatial Transcriptomics],579,20615,False,True,True,True,False
-NCBI4,Cervix,Visium,Spatiotemporally Deciphering the Unknown Role of Persistent HPV Infection in Precancer to Cervical Cancer Progression: Integrating Single-Cell RNA-Sequencing Landscape and Spatial Transcriptomics Atlas [Spatial Transcriptomics],1054,20615,False,True,True,True,False
-NCBI591,Eye,Visium,GENE EXPRESSION WITHIN A HUMAN CHOROIDAL NEOVASCULAR MEMBRANE USING SPATIAL TRANSCRIPTOMICS,663,36601,False,True,True,True,False
-NCBI592,Eye,Visium,GENE EXPRESSION WITHIN A HUMAN CHOROIDAL NEOVASCULAR MEMBRANE USING SPATIAL TRANSCRIPTOMICS,721,36601,False,True,True,True,False
-NCBI593,Eye,Visium,GENE EXPRESSION WITHIN A HUMAN CHOROIDAL NEOVASCULAR MEMBRANE USING SPATIAL TRANSCRIPTOMICS,724,36601,False,True,True,True,False
-NCBI594,Eye,Visium,GENE EXPRESSION WITHIN A HUMAN CHOROIDAL NEOVASCULAR MEMBRANE USING SPATIAL TRANSCRIPTOMICS,1307,36601,False,True,True,True,False
-NCBI595,Eye,Visium,GENE EXPRESSION WITHIN A HUMAN CHOROIDAL NEOVASCULAR MEMBRANE USING SPATIAL TRANSCRIPTOMICS,1303,36601,False,True,True,True,False
-NCBI771,Eye,Visium,Spatial transcriptomics of adenoid cystic carcinoma of the lacrimal gland,3584,17943,False,True,True,True,False
-TENX15,Heart,Visium,Human Heart,4247,36601,False,True,True,True,False
-MISC101,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1236,33538,False,True,True,True,False
-MISC102,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1166,33538,False,True,True,True,False
-MISC103,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1735,33538,False,True,True,True,False
-MISC104,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2073,33538,False,True,True,True,False
-MISC105,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1035,33538,False,True,True,True,False
-MISC106,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2260,33538,False,True,True,True,False
-MISC107,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2152,33538,False,True,True,True,False
-MISC108,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1249,33538,False,True,True,True,False
-MISC109,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1252,33538,False,True,True,True,False
-MISC110,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1225,33538,False,True,True,True,False
-MISC111,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2037,33538,False,True,True,True,False
-MISC112,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1564,33538,False,True,True,True,False
-MISC113,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2955,33538,False,True,True,True,False
-MISC114,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2177,33538,False,True,True,True,False
-MISC115,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1040,33538,False,True,True,True,False
-MISC116,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1831,33538,False,True,True,True,False
-MISC117,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2891,33538,False,True,True,True,False
-MISC118,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2881,33538,False,True,True,True,False
-MISC119,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3448,33538,False,True,True,True,False
-MISC120,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3400,33538,False,True,True,True,False
-MISC121,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3052,33538,False,True,True,True,False
-MISC122,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3430,33538,False,True,True,True,False
-MISC123,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2852,33538,False,True,True,True,False
-MISC124,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2942,33538,False,True,True,True,False
-MISC125,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3478,33538,False,True,True,True,False
-MISC126,Heart,Visium,Spatially resolved multiomics of human cardiac niches,4521,33538,False,True,True,True,False
-MISC127,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3802,33538,False,True,True,True,False
-MISC128,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3982,17922,False,True,True,True,False
-MISC129,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3533,17922,False,True,True,True,False
-MISC130,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3533,17922,False,True,True,True,False
-MISC131,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2807,33538,False,True,True,True,False
-MISC132,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2843,33538,False,True,True,True,False
-MISC133,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3153,33538,False,True,True,True,False
-MISC134,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2338,33538,False,True,True,True,False
-MISC135,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2697,33538,False,True,True,True,False
-MISC136,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2090,33538,False,True,True,True,False
-MISC138,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2199,33538,False,True,True,True,False
-MISC139,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2562,33538,False,True,True,True,False
-MISC140,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2168,33538,False,True,True,True,False
-MISC141,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1702,33538,False,True,True,True,False
-MISC142,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1302,33538,False,True,True,True,False
-NCBI562,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,2468,36601,False,True,True,True,False
-NCBI563,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,1376,36601,False,True,True,True,False
-NCBI564,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,262,36601,False,True,True,True,False
-NCBI565,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,1085,36601,False,True,True,True,False
-NCBI566,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,939,36601,False,True,True,True,False
-NCBI567,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,817,36601,False,True,True,True,False
-NCBI568,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,2438,36601,False,True,True,True,False
-NCBI538,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,469,33538,False,True,True,True,False
-NCBI539,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,475,33538,False,True,True,True,False
-NCBI540,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,413,33538,False,True,True,True,False
-MEND48,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,475,33538,False,True,True,True,False
-MEND49,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,413,33538,False,True,True,True,False
-MEND54,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,469,33538,False,True,True,True,False
-TENX71,Kidney,Visium,"Human Kidney, 11 mm Capture Area (FFPE)",5936,18085,False,True,True,True,False
-NCBI599,Kidney,Visium,Integration of spatial and single cell transcriptomics localizes epithelial-immune cross-talk in kidney injury,3007,33538,False,True,True,True,False
-NCBI692,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],370,36601,False,True,True,True,False
-NCBI693,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],507,36601,False,True,True,True,False
-NCBI694,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],640,36601,False,True,True,True,False
-NCBI695,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],673,36601,False,True,True,True,False
-NCBI696,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],645,36601,False,True,True,True,False
-NCBI697,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],317,36601,False,True,True,True,False
-NCBI698,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],407,36601,False,True,True,True,False
-NCBI699,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],787,36601,False,True,True,True,False
-NCBI700,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],601,36601,False,True,True,True,False
-NCBI701,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],904,36601,False,True,True,True,False
-NCBI702,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],461,36601,False,True,True,True,False
-NCBI703,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],453,36601,False,True,True,True,False
-NCBI704,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],534,36601,False,True,True,True,False
-NCBI705,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],560,36601,False,True,True,True,False
-NCBI706,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],673,36601,False,True,True,True,False
-NCBI707,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],673,36601,False,True,True,True,False
-NCBI708,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],1322,36601,False,True,True,True,False
-NCBI709,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],1034,36601,False,True,True,True,False
-NCBI710,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],956,36601,False,True,True,True,False
-NCBI711,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],2627,36601,False,True,True,True,False
-NCBI712,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],4166,36601,False,True,True,True,False
-NCBI713,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],3627,36601,False,True,True,True,False
-NCBI714,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],3007,33538,False,True,True,True,False
-INT1,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1084,36601,False,True,True,True,False
-INT10,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1983,36601,False,True,True,True,False
-INT11,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1439,36601,False,True,True,True,False
-INT12,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1451,36601,False,True,True,True,False
-INT13,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4359,17943,False,True,True,True,False
-INT14,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4562,17943,False,True,True,True,False
-INT15,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4940,17943,False,True,True,True,False
-INT16,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,3206,17943,False,True,True,True,False
-INT17,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,3585,17943,False,True,True,True,False
-INT18,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4915,17943,False,True,True,True,False
-INT19,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4948,17943,False,True,True,True,False
-INT2,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,2580,36601,False,True,True,True,False
-INT20,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4860,17943,False,True,True,True,False
-INT21,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4975,17943,False,True,True,True,False
-INT22,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,3829,17943,False,True,True,True,False
-INT23,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4755,17943,False,True,True,True,False
-INT24,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4510,17943,False,True,True,True,False
-INT3,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,2007,36601,False,True,True,True,False
-INT4,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1349,36601,False,True,True,True,False
-INT5,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1186,36601,False,True,True,True,False
-INT6,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1678,36601,False,True,True,True,False
-INT7,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,2374,36601,False,True,True,True,False
-INT8,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1949,36601,False,True,True,True,False
-INT9,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1696,36601,False,True,True,True,False
-NCBI642,Liver,Visium,Identification of TREM1+CD163+ myeloid cells as a deleterious immune subset in HCC [Spatial Transcriptomics],1987,36601,False,True,True,True,False
-NCBI643,Liver,Visium,Identification of TREM1+CD163+ myeloid cells as a deleterious immune subset in HCC [Spatial Transcriptomics],2261,36601,False,True,True,True,False
-NCBI826,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,False,True,True,True,False
-NCBI827,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,False,True,True,True,False
-NCBI828,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,False,True,True,True,False
-NCBI829,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,False,True,True,True,False
-NCBI830,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,False,True,True,True,False
-NCBI831,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,False,True,True,True,False
-NCBI832,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,False,True,True,True,False
-NCBI833,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,False,True,True,True,False
-NCBI672,Liver,Visium,Single-cell and spatial transcriptomics characterisation of the immunological landscape in the healthy and PSC human liver,4992,36601,False,True,True,True,False
-NCBI673,Liver,Visium,Single-cell and spatial transcriptomics characterisation of the immunological landscape in the healthy and PSC human liver,4992,36601,False,True,True,True,False
-NCBI674,Liver,Visium,Single-cell and spatial transcriptomics characterisation of the immunological landscape in the healthy and PSC human liver,4992,36601,False,True,True,True,False
-NCBI675,Liver,Visium,Single-cell and spatial transcriptomics characterisation of the immunological landscape in the healthy and PSC human liver,4992,36601,False,True,True,True,False
-MISC13,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,1768,17922,False,True,True,True,False
-MISC14,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,1670,17922,False,True,True,True,False
-MISC15,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2501,17922,False,True,True,True,False
-MISC16,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,3154,17922,False,True,True,True,False
-MISC17,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,1084,33538,False,True,True,True,False
-MISC18,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2081,33538,False,True,True,True,False
-MISC19,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2454,33538,False,True,True,True,False
-MISC20,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,3316,33538,False,True,True,True,False
-MISC21,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2987,33538,False,True,True,True,False
-MISC22,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2704,33538,False,True,True,True,False
-MISC23,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,436,33538,False,True,True,True,False
-MISC24,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,875,33538,False,True,True,True,False
-MISC25,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2249,33538,False,True,True,True,False
-MISC26,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2524,33538,False,True,True,True,False
-MISC27,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,408,33538,False,True,True,True,False
-MISC28,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,863,33538,False,True,True,True,False
-MISC29,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2283,33538,False,True,True,True,False
-MISC30,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2729,33538,False,True,True,True,False
-MISC31,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2524,33538,False,True,True,True,False
-MISC32,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,1928,33538,False,True,True,True,False
-NCBI534,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,533,33538,False,True,True,True,False
-NCBI535,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,439,33538,False,True,True,True,False
-NCBI536,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,444,33538,False,True,True,True,False
-NCBI537,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,416,33538,False,True,True,True,False
-MEND41,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,439,33538,False,True,True,True,False
-MEND45,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,444,33538,False,True,True,True,False
-MEND47,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,533,33538,False,True,True,True,False
-MEND51,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,416,33538,False,True,True,True,False
-MEND52,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,758,33550,False,True,True,True,False
-TENX62,Lung,Visium,Human Lung Cancer (FFPE),3858,18085,False,True,True,True,False
-TENX72,Lung,Visium,"Human Lung Cancer, 11 mm Capture Area (FFPE)",6195,18085,False,True,True,True,False
-MEND85,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,2462,36601,False,True,True,True,False
-MEND86,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,3236,36601,False,True,True,True,False
-MEND87,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,1508,36601,False,True,True,True,False
-MEND88,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,986,36601,False,True,True,True,False
-MEND89,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,3712,17943,False,True,True,True,False
-MEND90,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,2726,17943,False,True,True,True,False
-TENX16,Lymph node,Visium,Human Lymph Node,4035,36601,False,True,True,True,False
-NCBI681,Lymph node,Visium,Single cell profiling of primary and paired metastatic lymph node tumors in breast cancer patients,4992,33931,False,True,True,True,False
-NCBI682,Lymph node,Visium,Single cell profiling of primary and paired metastatic lymph node tumors in breast cancer patients,4988,33931,False,True,True,True,False
-NCBI683,Lymph node,Visium,Single cell profiling of primary and paired metastatic lymph node tumors in breast cancer patients,4992,33931,False,True,True,True,False
-NCBI684,Lymph node,Visium,Single cell profiling of primary and paired metastatic lymph node tumors in breast cancer patients,4992,33931,False,True,True,True,False
-TENX51,Ovary,Visium,Human Ovarian Cancer (FFPE),3455,17943,False,True,True,True,False
-TENX65,Ovary,Visium,"Human Ovarian Cancer, 11 mm Capture Area (FFPE)",4674,18085,False,True,True,True,False
-NCBI569,Pancreas,Visium,Schwann Cells Shape Tumor Cells and Cancer-Associated Fibroblasts in the Pancreatic Ductal Adenocarcinoma Microenvironment [ST],3493,20615,False,True,True,True,False
-NCBI570,Pancreas,Visium,Schwann Cells Shape Tumor Cells and Cancer-Associated Fibroblasts in the Pancreatic Ductal Adenocarcinoma Microenvironment [ST],3216,20615,False,True,True,True,False
-NCBI571,Pancreas,Visium,Schwann Cells Shape Tumor Cells and Cancer-Associated Fibroblasts in the Pancreatic Ductal Adenocarcinoma Microenvironment [ST],2498,20615,False,True,True,True,False
-NCBI572,Pancreas,Visium,Schwann Cells Shape Tumor Cells and Cancer-Associated Fibroblasts in the Pancreatic Ductal Adenocarcinoma Microenvironment [ST],3794,20615,False,True,True,True,False
-TENX46,Prostate,Visium,"Human Prostate Cancer, Acinar Cell Carcinoma (FFPE)",3043,17943,False,True,True,True,False
-TENX40,Prostate,Visium,"Human Prostate Cancer, Adenocarcinoma with Invasive Carcinoma (FFPE)",4371,17943,False,True,True,True,False
-TENX41,Prostate,Visium,Normal Human Prostate (FFPE),2543,17943,False,True,True,True,False
-INT25,Prostate,Visium,Prostate ST Internal,3808,17943,False,True,True,True,False
-INT26,Prostate,Visium,Prostate ST Internal,3894,17943,False,True,True,True,False
-INT27,Prostate,Visium,Prostate ST Internal,4176,17943,False,True,True,True,False
-INT28,Prostate,Visium,Prostate ST Internal,3990,17943,False,True,True,True,False
-INT35,Prostate,Visium,Prostate ST Internal,3998,17943,False,True,True,True,False
-MEND139,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3749,33538,False,True,True,True,False
-MEND140,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1935,33538,False,True,True,True,False
-MEND141,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1794,33538,False,True,True,True,False
-MEND142,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2997,33538,False,True,True,True,False
-MEND143,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3816,33538,False,True,True,True,False
-MEND144,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,4074,33538,False,True,True,True,False
-MEND145,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1418,33538,False,True,True,True,False
-MEND146,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1964,33538,False,True,True,True,False
-MEND147,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2335,33538,False,True,True,True,False
-MEND148,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1633,33538,False,True,True,True,False
-MEND149,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1851,33538,False,True,True,True,False
-MEND150,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1751,33538,False,True,True,True,False
-MEND151,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2600,33538,False,True,True,True,False
-MEND152,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3082,33538,False,True,True,True,False
-MEND153,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1820,33538,False,True,True,True,False
-MEND154,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2736,33538,False,True,True,True,False
-MEND156,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3554,33538,False,True,True,True,False
-MEND157,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3190,33538,False,True,True,True,False
-MEND158,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3092,33538,False,True,True,True,False
-MEND159,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3856,33538,False,True,True,True,False
-MEND160,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,4079,33538,False,True,True,True,False
-MEND161,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2775,33538,False,True,True,True,False
-MEND162,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2609,33538,False,True,True,True,False
-MEND59,Prostate,Visium,Spatially resolved transcriptomic profiling of degraded,3832,17943,False,True,True,True,False
-MEND60,Prostate,Visium,Spatially resolved transcriptomic profiling of degraded,3954,17943,False,True,True,True,False
-MEND61,Prostate,Visium,Spatially resolved transcriptomic profiling of degraded,4248,36601,False,True,True,True,False
-MEND62,Prostate,Visium,Spatially resolved transcriptomic profiling of degraded,3650,36601,False,True,True,True,False
-MEND37,Skin,Visium,Human squamous cell carcinoma,2363,33538,False,True,True,True,False
-MEND38,Skin,Visium,Human squamous cell carcinoma,2752,33538,False,True,True,True,False
-MEND39,Skin,Visium,Human squamous cell carcinoma,2496,33538,False,True,True,True,False
-MEND40,Skin,Visium,Human squamous cell carcinoma,2793,33538,False,True,True,True,False
-NCBI460,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1951,20613,False,True,True,True,False
-NCBI461,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1987,20613,False,True,True,True,False
-NCBI462,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,2043,20613,False,True,True,True,False
-NCBI463,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1253,20613,False,True,True,True,False
-NCBI464,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1979,20613,False,True,True,True,False
-NCBI465,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,736,20613,False,True,True,True,False
-NCBI466,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,691,20613,False,True,True,True,False
-NCBI467,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1906,20613,False,True,True,True,False
-NCBI468,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1964,20613,False,True,True,True,False
-NCBI469,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1504,20613,False,True,True,True,False
-NCBI470,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1350,20613,False,True,True,True,False
-NCBI471,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1117,20613,False,True,True,True,False
-NCBI472,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1122,20613,False,True,True,True,False
-NCBI473,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,744,20613,False,True,True,True,False
-NCBI474,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,598,20613,False,True,True,True,False
-NCBI475,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1414,20613,False,True,True,True,False
-NCBI476,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1144,20613,False,True,True,True,False
-NCBI477,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,791,20613,False,True,True,True,False
-NCBI478,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,790,20613,False,True,True,True,False
-NCBI479,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1040,20613,False,True,True,True,False
-NCBI480,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,695,20613,False,True,True,True,False
-NCBI481,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,651,20613,False,True,True,True,False
-NCBI482,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,625,20613,False,True,True,True,False
-NCBI483,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,923,20613,False,True,True,True,False
-NCBI484,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,713,20613,False,True,True,True,False
-NCBI485,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,545,20613,False,True,True,True,False
-NCBI486,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,305,20613,False,True,True,True,False
-NCBI487,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1014,20613,False,True,True,True,False
-NCBI488,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1021,20613,False,True,True,True,False
-NCBI489,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,585,20613,False,True,True,True,False
-NCBI490,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,617,20613,False,True,True,True,False
-NCBI491,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,913,20613,False,True,True,True,False
-NCBI492,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,814,20613,False,True,True,True,False
-NCBI493,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,566,20613,False,True,True,True,False
-NCBI494,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,508,20613,False,True,True,True,False
-NCBI495,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,706,20613,False,True,True,True,False
-NCBI496,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,697,20613,False,True,True,True,False
-NCBI497,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,765,20613,False,True,True,True,False
-NCBI498,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,698,20613,False,True,True,True,False
-NCBI503,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,985,20613,False,True,True,True,False
-NCBI504,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1000,20613,False,True,True,True,False
-NCBI505,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,706,20613,False,True,True,True,False
-NCBI506,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,666,20613,False,True,True,True,False
-NCBI507,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,469,20613,False,True,True,True,False
-NCBI508,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,442,20613,False,True,True,True,False
-NCBI509,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,768,20613,False,True,True,True,False
-NCBI510,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,525,20613,False,True,True,True,False
-NCBI515,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,825,20613,False,True,True,True,False
-NCBI516,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,450,20613,False,True,True,True,False
-NCBI517,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,549,20613,False,True,True,True,False
-NCBI518,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,546,20613,False,True,True,True,False
-NCBI519,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,524,20613,False,True,True,True,False
-NCBI520,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,527,20613,False,True,True,True,False
-NCBI521,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,464,20613,False,True,True,True,False
-NCBI522,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,587,20613,False,True,True,True,False
-NCBI523,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,752,20613,False,True,True,True,False
-NCBI524,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,909,20613,False,True,True,True,False
-NCBI525,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,777,20613,False,True,True,True,False
-NCBI526,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,818,20613,False,True,True,True,False
-NCBI690,Uterus,Visium,A single-cell transcriptomic analysis of endometriosis,1960,36601,False,True,True,True,False
-NCBI691,Uterus,Visium,A single-cell transcriptomic analysis of endometriosis,1388,36601,False,True,True,True,False
-NCBI573,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1547,36612,False,True,True,True,False
-NCBI574,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1505,36612,False,True,True,True,False
-NCBI575,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,967,36612,False,True,True,True,False
-NCBI576,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,470,36612,False,True,True,True,False
-NCBI811,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1894,36612,False,True,True,True,False
-NCBI812,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,2605,36612,False,True,True,True,False
-NCBI813,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,2027,36612,False,True,True,True,False
-NCBI814,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1323,36612,False,True,True,True,False
-NCBI815,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,369,36612,False,True,True,True,False
-NCBI816,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,669,36612,False,True,True,True,False
-NCBI817,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,341,36612,False,True,True,True,False
-NCBI818,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,515,36612,False,True,True,True,False
-NCBI819,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,918,36612,False,True,True,True,False
-NCBI820,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1561,36612,False,True,True,True,False
-NCBI821,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1375,36612,False,True,True,True,False
+NCBI600,Bladder,Visium,"A new epithelial cell subpopulation predicts response to surgery, chemotherapy, and immunotherapy in bladder cancer",832,33538,True,True,True,True,True
+NCBI601,Bladder,Visium,"A new epithelial cell subpopulation predicts response to surgery, chemotherapy, and immunotherapy in bladder cancer",1469,33538,True,True,True,True,True
+NCBI602,Bladder,Visium,"A new epithelial cell subpopulation predicts response to surgery, chemotherapy, and immunotherapy in bladder cancer",1017,33538,True,True,True,True,True
+NCBI603,Bladder,Visium,"A new epithelial cell subpopulation predicts response to surgery, chemotherapy, and immunotherapy in bladder cancer",768,33538,True,True,True,True,True
+NCBI854,Bladder,Visium,Batf3-dendritic cells and 4-1BB-4-1BB ligand axis are required at the effector phase within the tumor microenvironment for PD-1-PD-L1 blockade efficacy,699,17943,True,True,True,True,True
+NCBI855,Bladder,Visium,Batf3-dendritic cells and 4-1BB-4-1BB ligand axis are required at the effector phase within the tumor microenvironment for PD-1-PD-L1 blockade efficacy,1432,17943,True,True,True,True,True
+MISC33,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3385,18729,True,True,True,True,True
+MISC34,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3731,19276,True,True,True,True,True
+MISC35,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3578,19061,True,True,True,True,True
+MISC36,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3502,19119,True,True,True,True,True
+MISC37,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3636,19396,True,True,True,True,True
+MISC38,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,1727,19366,True,True,True,True,True
+MISC39,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4078,19234,True,True,True,True,True
+MISC40,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4116,19352,True,True,True,True,True
+MISC41,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3708,19255,True,True,True,True,True
+MISC42,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,659,19304,True,True,True,True,True
+MISC43,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,1186,19121,True,True,True,True,True
+MISC44,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,932,18518,True,True,True,True,True
+MISC45,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4118,19270,True,True,True,True,True
+MISC46,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4511,19337,True,True,True,True,True
+MISC47,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4818,19327,True,True,True,True,True
+MISC48,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3577,19111,True,True,True,True,True
+MISC49,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4624,19330,True,True,True,True,True
+MISC50,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4297,18776,True,True,True,True,True
+MISC51,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3076,19174,True,True,True,True,True
+MISC52,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,229,19284,True,True,True,True,True
+MISC53,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,818,19315,True,True,True,True,True
+MISC54,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,668,19266,True,True,True,True,True
+MISC55,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,863,19175,True,True,True,True,True
+MISC56,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3395,19338,True,True,True,True,True
+MISC57,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,989,19165,True,True,True,True,True
+MISC58,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,1165,19259,True,True,True,True,True
+MISC59,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,1312,19305,True,True,True,True,True
+MISC60,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,1014,19255,True,True,True,True,True
+MISC61,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,2047,19343,True,True,True,True,True
+MISC62,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4132,19391,True,True,True,True,True
+MISC63,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3467,19346,True,True,True,True,True
+MISC64,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,2533,19411,True,True,True,True,True
+MISC65,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3261,19402,True,True,True,True,True
+MISC66,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3970,19347,True,True,True,True,True
+MISC67,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,2551,19384,True,True,True,True,True
+MISC68,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,2708,19359,True,True,True,True,True
+MISC69,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3634,19263,True,True,True,True,True
+MISC70,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3934,19116,True,True,True,True,True
+MISC71,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,2997,19251,True,True,True,True,True
+MISC72,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,4369,19310,True,True,True,True,True
+MISC73,Bowel,Visium,COLON MAP: Colon Molecular Atlas Project,3901,19074,True,True,True,True,True
+TENX152,Bowel,Visium,Characterization of immune cell populations in the tumor microenvironment of colorectal cancer using high definition spatial profiling,4269,18085,True,True,True,True,True
+ZEN36,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1691,36601,True,True,True,True,True
+ZEN37,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1656,36601,True,True,True,True,True
+ZEN38,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,387,36601,True,True,True,True,True
+ZEN39,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1219,36601,True,True,True,True,True
+ZEN40,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,2128,36601,True,True,True,True,True
+ZEN41,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1685,36601,True,True,True,True,True
+ZEN42,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1192,36601,True,True,True,True,True
+ZEN43,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,691,36601,True,True,True,True,True
+ZEN44,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1048,36601,True,True,True,True,True
+ZEN45,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,328,36601,True,True,True,True,True
+ZEN46,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,1803,36601,True,True,True,True,True
+ZEN47,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,2317,36601,True,True,True,True,True
+ZEN48,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,2385,36601,True,True,True,True,True
+ZEN49,Bowel,Visium,Charting the Heterogeneity of Colorectal Cancer Consensus Molecular Subtypes using Spatial Transcriptomics: datasets,2203,36601,True,True,True,True,True
+TENX70,Bowel,Visium,"Human Colorectal Cancer, 11 mm Capture Area (FFPE)",9080,18085,True,True,True,True,True
+TENX28,Bowel,Visium,"Human Colorectal Cancer: Targeted, Gene Signature Panel",3138,1142,True,True,True,True,True
+TENX29,Bowel,Visium,Human Colorectal Cancer: Whole Transcriptome Analysis,3138,36601,True,True,True,True,True
+TENX49,Bowel,Visium,Human Intestine Cancer (FPPE),2660,17943,True,True,True,True,True
+MEND33,Bowel,Visium,"Human ileum, Visium",3291,33538,True,True,True,True,True
+MEND34,Bowel,Visium,"Human ileum, Visium",3294,33538,True,True,True,True,True
+MEND35,Bowel,Visium,"Human ileum, Visium",3320,33538,True,True,True,True,True
+MEND36,Bowel,Visium,"Human ileum, Visium",3214,33538,True,True,True,True,True
+MEND91,Bowel,Visium,Spatially resolved transcriptomic profiling of degraded,1154,17943,True,True,True,True,True
+MEND92,Bowel,Visium,Spatially resolved transcriptomic profiling of degraded,1071,17943,True,True,True,True,True
+MEND93,Bowel,Visium,Spatially resolved transcriptomic profiling of degraded,3742,17943,True,True,True,True,True
+MEND95,Bowel,Visium,Spatially resolved transcriptomic profiling of degraded,1738,36601,True,True,True,True,True
+MEND96,Bowel,Visium,Spatially resolved transcriptomic profiling of degraded,3360,17943,True,True,True,True,True
+TENX89,Bowel,Visium,Visium CytAssist Gene Expression Libraries of Post-Xenium Human Colon Cancer (FFPE),6414,18085,True,True,True,True,True
+TENX90,Bowel,Visium,Visium CytAssist Gene Expression Libraries of Post-Xenium Human Colon Cancer (FFPE),6487,18085,True,True,True,True,True
+TENX91,Bowel,Visium,Visium CytAssist Gene Expression Libraries of Post-Xenium Human Colon Cancer (FFPE),6352,18085,True,True,True,True,True
+TENX92,Bowel,Visium,Visium CytAssist Gene Expression Libraries of Post-Xenium Human Colon Cancer (FFPE),6518,18085,True,True,True,True,True
+TENX73,Brain,Visium,"Human Brain Cancer, 11 mm Capture Area (FFPE)",10878,18085,True,True,True,True,True
+TENX56,Brain,Visium,"Human Cerebellum: Targeted, Neuroscience Panel",4992,1186,True,True,True,True,True
+TENX27,Brain,Visium,Human Cerebellum: Whole Transcriptome Analysis,4992,1186,True,True,True,True,True
+TENX30,Brain,Visium,"Human Glioblastoma: Targeted, Pan-Cancer Panel",3468,1253,True,True,True,True,True
+TENX31,Brain,Visium,Human Glioblastoma: Whole Transcriptome Analysis,3468,36601,True,True,True,True,True
+NCBI653,Brain,Visium,Spatial Multimodal Analysis: MALDI-MSI and Spatial Transcriptomics within the same tissue section,4633,17943,True,True,True,True,True
+NCBI654,Brain,Visium,Spatial Multimodal Analysis: MALDI-MSI and Spatial Transcriptomics within the same tissue section,4868,17943,True,True,True,True,True
+NCBI655,Brain,Visium,Spatial Multimodal Analysis: MALDI-MSI and Spatial Transcriptomics within the same tissue section,4984,17943,True,True,True,True,True
+NCBI656,Brain,Visium,Spatial Multimodal Analysis: MALDI-MSI and Spatial Transcriptomics within the same tissue section,4968,17943,True,True,True,True,True
+NCBI657,Brain,Visium,Spatial Multimodal Analysis: MALDI-MSI and Spatial Transcriptomics within the same tissue section,3900,36601,True,True,True,True,True
+NCBI628,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,1262,36601,True,True,True,True,True
+NCBI629,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,3620,36601,True,True,True,True,True
+NCBI630,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,2961,36601,True,True,True,True,True
+NCBI631,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,2051,36601,True,True,True,True,True
+NCBI632,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,2743,36601,True,True,True,True,True
+NCBI633,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,3153,36601,True,True,True,True,True
+NCBI634,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,1842,36601,True,True,True,True,True
+NCBI635,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,3027,36601,True,True,True,True,True
+NCBI636,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,1616,36601,True,True,True,True,True
+NCBI637,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,2705,36601,True,True,True,True,True
+NCBI638,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,3060,36601,True,True,True,True,True
+NCBI639,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,979,36601,True,True,True,True,True
+NCBI640,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,1959,36601,True,True,True,True,True
+NCBI641,Brain,Visium,Spatial transcriptomics reveal unnresolved wound repair as potential driver of PFA Ependymoma progression,2236,36601,True,True,True,True,True
+MEND63,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1433,17943,True,True,True,True,True
+MEND64,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1943,17943,True,True,True,True,True
+MEND65,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1323,17943,True,True,True,True,True
+MEND66,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1238,17943,True,True,True,True,True
+MEND67,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1702,36601,True,True,True,True,True
+MEND68,Brain,Visium,Spatially resolved transcriptomic profiling of degraded,1490,36601,True,True,True,True,True
+MISC1,Brain,Visium,spatialLIBD,3460,33538,True,True,True,True,True
+MISC10,Brain,Visium,spatialLIBD,4789,33538,True,True,True,True,True
+MISC11,Brain,Visium,spatialLIBD,4384,33538,True,True,True,True,True
+MISC12,Brain,Visium,spatialLIBD,4226,33538,True,True,True,True,True
+MISC2,Brain,Visium,spatialLIBD,3592,33538,True,True,True,True,True
+MISC3,Brain,Visium,spatialLIBD,3673,33538,True,True,True,True,True
+MISC4,Brain,Visium,spatialLIBD,3639,33538,True,True,True,True,True
+MISC5,Brain,Visium,spatialLIBD,4015,33538,True,True,True,True,True
+MISC6,Brain,Visium,spatialLIBD,4110,33538,True,True,True,True,True
+MISC7,Brain,Visium,spatialLIBD,3498,33538,True,True,True,True,True
+MISC8,Brain,Visium,spatialLIBD,3661,33538,True,True,True,True,True
+MISC9,Brain,Visium,spatialLIBD,4634,33538,True,True,True,True,True
+TENX68,Breast,Visium,"Fresh Frozen Visium on CytAssist: Human Breast Cancer, Probe-Based Whole Transcriptome Profiling",1657,18085,True,True,True,True,True
+NCBI776,Breast,Visium,"High resolution mapping of the tumor microenvironment using integrated single-cell, spatial and in situ analysis [scRNA-seq and Visium]",4992,18085,True,True,True,True,True
+TENX13,Breast,Visium,Human Breast Cancer (Block A Section 1),3813,33538,True,True,True,True,True
+TENX14,Breast,Visium,Human Breast Cancer (Block A Section 2),4015,33538,True,True,True,True,True
+TENX39,Breast,Visium,"Human Breast Cancer: Ductal Carcinoma In Situ, Invasive Carcinoma (FFPE)",2518,17943,True,True,True,True,True
+TENX23,Breast,Visium,"Human Breast Cancer: Targeted, Immunology Panel",4325,1056,True,True,True,True,True
+TENX53,Breast,Visium,"Human Breast Cancer: Visium Fresh Frozen, Whole Transcriptome",4898,36601,True,True,True,True,True
+TENX24,Breast,Visium,Human Breast Cancer: Whole Transcriptome Analysis,4325,32285,True,True,True,True,True
+TENX50,Cervix,Visium,Human Cervical Cancer (FFPE),2781,17943,True,True,True,True,True
+NCBI1,Cervix,Visium,Spatiotemporally Deciphering the Unknown Role of Persistent HPV Infection in Precancer to Cervical Cancer Progression: Integrating Single-Cell RNA-Sequencing Landscape and Spatial Transcriptomics Atlas [Spatial Transcriptomics],1593,20615,True,True,True,True,True
+NCBI2,Cervix,Visium,Spatiotemporally Deciphering the Unknown Role of Persistent HPV Infection in Precancer to Cervical Cancer Progression: Integrating Single-Cell RNA-Sequencing Landscape and Spatial Transcriptomics Atlas [Spatial Transcriptomics],1757,20615,True,True,True,True,True
+NCBI3,Cervix,Visium,Spatiotemporally Deciphering the Unknown Role of Persistent HPV Infection in Precancer to Cervical Cancer Progression: Integrating Single-Cell RNA-Sequencing Landscape and Spatial Transcriptomics Atlas [Spatial Transcriptomics],579,20615,True,True,True,True,True
+NCBI4,Cervix,Visium,Spatiotemporally Deciphering the Unknown Role of Persistent HPV Infection in Precancer to Cervical Cancer Progression: Integrating Single-Cell RNA-Sequencing Landscape and Spatial Transcriptomics Atlas [Spatial Transcriptomics],1054,20615,True,True,True,True,True
+NCBI591,Eye,Visium,GENE EXPRESSION WITHIN A HUMAN CHOROIDAL NEOVASCULAR MEMBRANE USING SPATIAL TRANSCRIPTOMICS,663,36601,True,True,True,True,True
+NCBI592,Eye,Visium,GENE EXPRESSION WITHIN A HUMAN CHOROIDAL NEOVASCULAR MEMBRANE USING SPATIAL TRANSCRIPTOMICS,721,36601,True,True,True,True,True
+NCBI593,Eye,Visium,GENE EXPRESSION WITHIN A HUMAN CHOROIDAL NEOVASCULAR MEMBRANE USING SPATIAL TRANSCRIPTOMICS,724,36601,True,True,True,True,True
+NCBI594,Eye,Visium,GENE EXPRESSION WITHIN A HUMAN CHOROIDAL NEOVASCULAR MEMBRANE USING SPATIAL TRANSCRIPTOMICS,1307,36601,True,True,True,True,True
+NCBI595,Eye,Visium,GENE EXPRESSION WITHIN A HUMAN CHOROIDAL NEOVASCULAR MEMBRANE USING SPATIAL TRANSCRIPTOMICS,1303,36601,True,True,True,True,True
+NCBI771,Eye,Visium,Spatial transcriptomics of adenoid cystic carcinoma of the lacrimal gland,3584,17943,True,True,True,True,True
+TENX15,Heart,Visium,Human Heart,4247,36601,True,True,True,True,True
+MISC101,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1236,33538,True,True,True,True,True
+MISC102,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1166,33538,True,True,True,True,True
+MISC103,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1735,33538,True,True,True,True,True
+MISC104,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2073,33538,True,True,True,True,True
+MISC105,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1035,33538,True,True,True,True,True
+MISC106,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2260,33538,True,True,True,True,True
+MISC107,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2152,33538,True,True,True,True,True
+MISC108,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1249,33538,True,True,True,True,True
+MISC109,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1252,33538,True,True,True,True,True
+MISC110,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1225,33538,True,True,True,True,True
+MISC111,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2037,33538,True,True,True,True,True
+MISC112,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1564,33538,True,True,True,True,True
+MISC113,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2955,33538,True,True,True,True,True
+MISC114,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2177,33538,True,True,True,True,True
+MISC115,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1040,33538,True,True,True,True,True
+MISC116,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1831,33538,True,True,True,True,True
+MISC117,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2891,33538,True,True,True,True,True
+MISC118,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2881,33538,True,True,True,True,True
+MISC119,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3448,33538,True,True,True,True,True
+MISC120,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3400,33538,True,True,True,True,True
+MISC121,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3052,33538,True,True,True,True,True
+MISC122,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3430,33538,True,True,True,True,True
+MISC123,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2852,33538,True,True,True,True,True
+MISC124,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2942,33538,True,True,True,True,True
+MISC125,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3478,33538,True,True,True,True,True
+MISC126,Heart,Visium,Spatially resolved multiomics of human cardiac niches,4521,33538,True,True,True,True,True
+MISC127,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3802,33538,True,True,True,True,True
+MISC128,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3982,17922,True,True,True,True,True
+MISC129,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3533,17922,True,True,True,True,True
+MISC130,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3533,17922,True,True,True,True,True
+MISC131,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2807,33538,True,True,True,True,True
+MISC132,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2843,33538,True,True,True,True,True
+MISC133,Heart,Visium,Spatially resolved multiomics of human cardiac niches,3153,33538,True,True,True,True,True
+MISC134,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2338,33538,True,True,True,True,True
+MISC135,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2697,33538,True,True,True,True,True
+MISC136,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2090,33538,True,True,True,True,True
+MISC138,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2199,33538,True,True,True,True,True
+MISC139,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2562,33538,True,True,True,True,True
+MISC140,Heart,Visium,Spatially resolved multiomics of human cardiac niches,2168,33538,True,True,True,True,True
+MISC141,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1702,33538,True,True,True,True,True
+MISC142,Heart,Visium,Spatially resolved multiomics of human cardiac niches,1302,33538,True,True,True,True,True
+NCBI562,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,2468,36601,True,True,True,True,True
+NCBI563,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,1376,36601,True,True,True,True,True
+NCBI564,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,262,36601,True,True,True,True,True
+NCBI565,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,1085,36601,True,True,True,True,True
+NCBI566,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,939,36601,True,True,True,True,True
+NCBI567,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,817,36601,True,True,True,True,True
+NCBI568,Kidney,Visium,A Spatial Transcriptomic atlas of the human kidney papilla identifies significant immune injury in patients with stone disease,2438,36601,True,True,True,True,True
+NCBI538,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,469,33538,True,True,True,True,True
+NCBI539,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,475,33538,True,True,True,True,True
+NCBI540,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,413,33538,True,True,True,True,True
+MEND48,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,475,33538,True,True,True,True,True
+MEND49,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,413,33538,True,True,True,True,True
+MEND54,Kidney,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,469,33538,True,True,True,True,True
+TENX71,Kidney,Visium,"Human Kidney, 11 mm Capture Area (FFPE)",5936,18085,True,True,True,True,True
+NCBI599,Kidney,Visium,Integration of spatial and single cell transcriptomics localizes epithelial-immune cross-talk in kidney injury,3007,33538,True,True,True,True,True
+NCBI692,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],370,36601,True,True,True,True,True
+NCBI693,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],507,36601,True,True,True,True,True
+NCBI694,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],640,36601,True,True,True,True,True
+NCBI695,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],673,36601,True,True,True,True,True
+NCBI696,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],645,36601,True,True,True,True,True
+NCBI697,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],317,36601,True,True,True,True,True
+NCBI698,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],407,36601,True,True,True,True,True
+NCBI699,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],787,36601,True,True,True,True,True
+NCBI700,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],601,36601,True,True,True,True,True
+NCBI701,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],904,36601,True,True,True,True,True
+NCBI702,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],461,36601,True,True,True,True,True
+NCBI703,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],453,36601,True,True,True,True,True
+NCBI704,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],534,36601,True,True,True,True,True
+NCBI705,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],560,36601,True,True,True,True,True
+NCBI706,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],673,36601,True,True,True,True,True
+NCBI707,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],673,36601,True,True,True,True,True
+NCBI708,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],1322,36601,True,True,True,True,True
+NCBI709,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],1034,36601,True,True,True,True,True
+NCBI710,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],956,36601,True,True,True,True,True
+NCBI711,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],2627,36601,True,True,True,True,True
+NCBI712,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],4166,36601,True,True,True,True,True
+NCBI713,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],3627,36601,True,True,True,True,True
+NCBI714,Kidney,Visium,Spatial localization with Spatial Transcriptomics for an atlas of healthy and injured cell states and niches in the human kidney [Visium ST],3007,33538,True,True,True,True,True
+INT1,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1084,36601,True,True,True,True,True
+INT10,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1983,36601,True,True,True,True,True
+INT11,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1439,36601,True,True,True,True,True
+INT12,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1451,36601,True,True,True,True,True
+INT13,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4359,17943,True,True,True,True,True
+INT14,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4562,17943,True,True,True,True,True
+INT15,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4940,17943,True,True,True,True,True
+INT16,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,3206,17943,True,True,True,True,True
+INT17,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,3585,17943,True,True,True,True,True
+INT18,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4915,17943,True,True,True,True,True
+INT19,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4948,17943,True,True,True,True,True
+INT2,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,2580,36601,True,True,True,True,True
+INT20,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4860,17943,True,True,True,True,True
+INT21,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4975,17943,True,True,True,True,True
+INT22,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,3829,17943,True,True,True,True,True
+INT23,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4755,17943,True,True,True,True,True
+INT24,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,4510,17943,True,True,True,True,True
+INT3,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,2007,36601,True,True,True,True,True
+INT4,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1349,36601,True,True,True,True,True
+INT5,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1186,36601,True,True,True,True,True
+INT6,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1678,36601,True,True,True,True,True
+INT7,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,2374,36601,True,True,True,True,True
+INT8,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1949,36601,True,True,True,True,True
+INT9,Kidney,Visium,Tertiary lymphoid structures generate and propagate anti-tumor antibody-producing plasma cells in renal cell cancer,1696,36601,True,True,True,True,True
+NCBI642,Liver,Visium,Identification of TREM1+CD163+ myeloid cells as a deleterious immune subset in HCC [Spatial Transcriptomics],1987,36601,True,True,True,True,True
+NCBI643,Liver,Visium,Identification of TREM1+CD163+ myeloid cells as a deleterious immune subset in HCC [Spatial Transcriptomics],2261,36601,True,True,True,True,True
+NCBI826,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,True,True,True,True,True
+NCBI827,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,True,True,True,True,True
+NCBI828,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,True,True,True,True,True
+NCBI829,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,True,True,True,True,True
+NCBI830,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,True,True,True,True,True
+NCBI831,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,True,True,True,True,True
+NCBI832,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,True,True,True,True,True
+NCBI833,Liver,Visium,Multimodal decoding of human liver regeneration [st_human],4992,33538,True,True,True,True,True
+NCBI672,Liver,Visium,Single-cell and spatial transcriptomics characterisation of the immunological landscape in the healthy and PSC human liver,4992,36601,True,True,True,True,True
+NCBI673,Liver,Visium,Single-cell and spatial transcriptomics characterisation of the immunological landscape in the healthy and PSC human liver,4992,36601,True,True,True,True,True
+NCBI674,Liver,Visium,Single-cell and spatial transcriptomics characterisation of the immunological landscape in the healthy and PSC human liver,4992,36601,True,True,True,True,True
+NCBI675,Liver,Visium,Single-cell and spatial transcriptomics characterisation of the immunological landscape in the healthy and PSC human liver,4992,36601,True,True,True,True,True
+MISC13,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,1768,17922,True,True,True,True,True
+MISC14,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,1670,17922,True,True,True,True,True
+MISC15,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2501,17922,True,True,True,True,True
+MISC16,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,3154,17922,True,True,True,True,True
+MISC17,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,1084,33538,True,True,True,True,True
+MISC18,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2081,33538,True,True,True,True,True
+MISC19,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2454,33538,True,True,True,True,True
+MISC20,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,3316,33538,True,True,True,True,True
+MISC21,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2987,33538,True,True,True,True,True
+MISC22,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2704,33538,True,True,True,True,True
+MISC23,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,436,33538,True,True,True,True,True
+MISC24,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,875,33538,True,True,True,True,True
+MISC25,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2249,33538,True,True,True,True,True
+MISC26,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2524,33538,True,True,True,True,True
+MISC27,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,408,33538,True,True,True,True,True
+MISC28,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,863,33538,True,True,True,True,True
+MISC29,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2283,33538,True,True,True,True,True
+MISC30,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2729,33538,True,True,True,True,True
+MISC31,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,2524,33538,True,True,True,True,True
+MISC32,Lung,Visium,A spatially resolved atlas of the human lung characterizes a gland-associated immune niche,1928,33538,True,True,True,True,True
+NCBI534,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,533,33538,True,True,True,True,True
+NCBI535,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,439,33538,True,True,True,True,True
+NCBI536,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,444,33538,True,True,True,True,True
+NCBI537,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues,416,33538,True,True,True,True,True
+MEND41,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,439,33538,True,True,True,True,True
+MEND45,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,444,33538,True,True,True,True,True
+MEND47,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,533,33538,True,True,True,True,True
+MEND51,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,416,33538,True,True,True,True,True
+MEND52,Lung,Visium,Genome-wide Spatial Expression Profiling in Formalin-fixed Tissues: Supplementary Data,758,33550,True,True,True,True,True
+TENX62,Lung,Visium,Human Lung Cancer (FFPE),3858,18085,True,True,True,True,True
+TENX72,Lung,Visium,"Human Lung Cancer, 11 mm Capture Area (FFPE)",6195,18085,True,True,True,True,True
+MEND85,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,2462,36601,True,True,True,True,True
+MEND86,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,3236,36601,True,True,True,True,True
+MEND87,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,1508,36601,True,True,True,True,True
+MEND88,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,986,36601,True,True,True,True,True
+MEND89,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,3712,17943,True,True,True,True,True
+MEND90,Lung,Visium,Spatially resolved transcriptomic profiling of degraded,2726,17943,True,True,True,True,True
+TENX16,Lymph node,Visium,Human Lymph Node,4035,36601,True,True,True,True,True
+NCBI681,Lymph node,Visium,Single cell profiling of primary and paired metastatic lymph node tumors in breast cancer patients,4992,33931,True,True,True,True,True
+NCBI682,Lymph node,Visium,Single cell profiling of primary and paired metastatic lymph node tumors in breast cancer patients,4988,33931,True,True,True,True,True
+NCBI683,Lymph node,Visium,Single cell profiling of primary and paired metastatic lymph node tumors in breast cancer patients,4992,33931,True,True,True,True,True
+NCBI684,Lymph node,Visium,Single cell profiling of primary and paired metastatic lymph node tumors in breast cancer patients,4992,33931,True,True,True,True,True
+TENX51,Ovary,Visium,Human Ovarian Cancer (FFPE),3455,17943,True,True,True,True,True
+TENX65,Ovary,Visium,"Human Ovarian Cancer, 11 mm Capture Area (FFPE)",4674,18085,True,True,True,True,True
+NCBI569,Pancreas,Visium,Schwann Cells Shape Tumor Cells and Cancer-Associated Fibroblasts in the Pancreatic Ductal Adenocarcinoma Microenvironment [ST],3493,20615,True,True,True,True,True
+NCBI570,Pancreas,Visium,Schwann Cells Shape Tumor Cells and Cancer-Associated Fibroblasts in the Pancreatic Ductal Adenocarcinoma Microenvironment [ST],3216,20615,True,True,True,True,True
+NCBI571,Pancreas,Visium,Schwann Cells Shape Tumor Cells and Cancer-Associated Fibroblasts in the Pancreatic Ductal Adenocarcinoma Microenvironment [ST],2498,20615,True,True,True,True,True
+NCBI572,Pancreas,Visium,Schwann Cells Shape Tumor Cells and Cancer-Associated Fibroblasts in the Pancreatic Ductal Adenocarcinoma Microenvironment [ST],3794,20615,True,True,True,True,True
+TENX46,Prostate,Visium,"Human Prostate Cancer, Acinar Cell Carcinoma (FFPE)",3043,17943,True,True,True,True,True
+TENX40,Prostate,Visium,"Human Prostate Cancer, Adenocarcinoma with Invasive Carcinoma (FFPE)",4371,17943,True,True,True,True,True
+TENX41,Prostate,Visium,Normal Human Prostate (FFPE),2543,17943,True,True,True,True,True
+INT25,Prostate,Visium,Prostate ST Internal,3808,17943,True,True,True,True,True
+INT26,Prostate,Visium,Prostate ST Internal,3894,17943,True,True,True,True,True
+INT27,Prostate,Visium,Prostate ST Internal,4176,17943,True,True,True,True,True
+INT28,Prostate,Visium,Prostate ST Internal,3990,17943,True,True,True,True,True
+INT35,Prostate,Visium,Prostate ST Internal,3998,17943,True,True,True,True,True
+MEND139,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3749,33538,True,True,True,True,True
+MEND140,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1935,33538,True,True,True,True,True
+MEND141,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1794,33538,True,True,True,True,True
+MEND142,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2997,33538,True,True,True,True,True
+MEND143,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3816,33538,True,True,True,True,True
+MEND144,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,4074,33538,True,True,True,True,True
+MEND145,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1418,33538,True,True,True,True,True
+MEND146,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1964,33538,True,True,True,True,True
+MEND147,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2335,33538,True,True,True,True,True
+MEND148,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1633,33538,True,True,True,True,True
+MEND149,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1851,33538,True,True,True,True,True
+MEND150,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1751,33538,True,True,True,True,True
+MEND151,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2600,33538,True,True,True,True,True
+MEND152,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3082,33538,True,True,True,True,True
+MEND153,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,1820,33538,True,True,True,True,True
+MEND154,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2736,33538,True,True,True,True,True
+MEND156,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3554,33538,True,True,True,True,True
+MEND157,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3190,33538,True,True,True,True,True
+MEND158,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3092,33538,True,True,True,True,True
+MEND159,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,3856,33538,True,True,True,True,True
+MEND160,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,4079,33538,True,True,True,True,True
+MEND161,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2775,33538,True,True,True,True,True
+MEND162,Prostate,Visium,Spatially resolved clonal copy number alterations in benign and malignant tissueJus,2609,33538,True,True,True,True,True
+MEND59,Prostate,Visium,Spatially resolved transcriptomic profiling of degraded,3832,17943,True,True,True,True,True
+MEND60,Prostate,Visium,Spatially resolved transcriptomic profiling of degraded,3954,17943,True,True,True,True,True
+MEND61,Prostate,Visium,Spatially resolved transcriptomic profiling of degraded,4248,36601,True,True,True,True,True
+MEND62,Prostate,Visium,Spatially resolved transcriptomic profiling of degraded,3650,36601,True,True,True,True,True
+MEND37,Skin,Visium,Human squamous cell carcinoma,2363,33538,True,True,True,True,True
+MEND38,Skin,Visium,Human squamous cell carcinoma,2752,33538,True,True,True,True,True
+MEND39,Skin,Visium,Human squamous cell carcinoma,2496,33538,True,True,True,True,True
+MEND40,Skin,Visium,Human squamous cell carcinoma,2793,33538,True,True,True,True,True
+NCBI460,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1951,20613,True,True,True,True,True
+NCBI461,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1987,20613,True,True,True,True,True
+NCBI462,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,2043,20613,True,True,True,True,True
+NCBI463,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1253,20613,True,True,True,True,True
+NCBI464,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1979,20613,True,True,True,True,True
+NCBI465,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,736,20613,True,True,True,True,True
+NCBI466,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,691,20613,True,True,True,True,True
+NCBI467,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1906,20613,True,True,True,True,True
+NCBI468,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1964,20613,True,True,True,True,True
+NCBI469,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1504,20613,True,True,True,True,True
+NCBI470,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1350,20613,True,True,True,True,True
+NCBI471,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1117,20613,True,True,True,True,True
+NCBI472,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1122,20613,True,True,True,True,True
+NCBI473,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,744,20613,True,True,True,True,True
+NCBI474,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,598,20613,True,True,True,True,True
+NCBI475,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1414,20613,True,True,True,True,True
+NCBI476,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1144,20613,True,True,True,True,True
+NCBI477,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,791,20613,True,True,True,True,True
+NCBI478,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,790,20613,True,True,True,True,True
+NCBI479,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1040,20613,True,True,True,True,True
+NCBI480,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,695,20613,True,True,True,True,True
+NCBI481,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,651,20613,True,True,True,True,True
+NCBI482,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,625,20613,True,True,True,True,True
+NCBI483,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,923,20613,True,True,True,True,True
+NCBI484,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,713,20613,True,True,True,True,True
+NCBI485,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,545,20613,True,True,True,True,True
+NCBI486,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,305,20613,True,True,True,True,True
+NCBI487,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1014,20613,True,True,True,True,True
+NCBI488,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1021,20613,True,True,True,True,True
+NCBI489,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,585,20613,True,True,True,True,True
+NCBI490,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,617,20613,True,True,True,True,True
+NCBI491,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,913,20613,True,True,True,True,True
+NCBI492,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,814,20613,True,True,True,True,True
+NCBI493,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,566,20613,True,True,True,True,True
+NCBI494,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,508,20613,True,True,True,True,True
+NCBI495,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,706,20613,True,True,True,True,True
+NCBI496,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,697,20613,True,True,True,True,True
+NCBI497,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,765,20613,True,True,True,True,True
+NCBI498,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,698,20613,True,True,True,True,True
+NCBI503,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,985,20613,True,True,True,True,True
+NCBI504,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,1000,20613,True,True,True,True,True
+NCBI505,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,706,20613,True,True,True,True,True
+NCBI506,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,666,20613,True,True,True,True,True
+NCBI507,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,469,20613,True,True,True,True,True
+NCBI508,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,442,20613,True,True,True,True,True
+NCBI509,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,768,20613,True,True,True,True,True
+NCBI510,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,525,20613,True,True,True,True,True
+NCBI515,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,825,20613,True,True,True,True,True
+NCBI516,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,450,20613,True,True,True,True,True
+NCBI517,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,549,20613,True,True,True,True,True
+NCBI518,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,546,20613,True,True,True,True,True
+NCBI519,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,524,20613,True,True,True,True,True
+NCBI520,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,527,20613,True,True,True,True,True
+NCBI521,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,464,20613,True,True,True,True,True
+NCBI522,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,587,20613,True,True,True,True,True
+NCBI523,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,752,20613,True,True,True,True,True
+NCBI524,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,909,20613,True,True,True,True,True
+NCBI525,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,777,20613,True,True,True,True,True
+NCBI526,Skin,Visium,Spatial transcriptomics landscape of non-communicable inflammatory skin diseases,818,20613,True,True,True,True,True
+NCBI690,Uterus,Visium,A single-cell transcriptomic analysis of endometriosis,1960,36601,True,True,True,True,True
+NCBI691,Uterus,Visium,A single-cell transcriptomic analysis of endometriosis,1388,36601,True,True,True,True,True
+NCBI573,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1547,36612,True,True,True,True,True
+NCBI574,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1505,36612,True,True,True,True,True
+NCBI575,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,967,36612,True,True,True,True,True
+NCBI576,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,470,36612,True,True,True,True,True
+NCBI811,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1894,36612,True,True,True,True,True
+NCBI812,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,2605,36612,True,True,True,True,True
+NCBI813,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,2027,36612,True,True,True,True,True
+NCBI814,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1323,36612,True,True,True,True,True
+NCBI815,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,369,36612,True,True,True,True,True
+NCBI816,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,669,36612,True,True,True,True,True
+NCBI817,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,341,36612,True,True,True,True,True
+NCBI818,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,515,36612,True,True,True,True,True
+NCBI819,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,918,36612,True,True,True,True,True
+NCBI820,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1561,36612,True,True,True,True,True
+NCBI821,Uterus,Visium,SARS-CoV-2 Niches in Human Placenta Revealed by Spatial Transcriptomics,1375,36612,True,True,True,True,True
