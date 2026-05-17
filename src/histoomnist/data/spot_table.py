@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 from scipy import sparse
 
-from histoomnist.data.size_factor import compute_size_factor, log_size_factor
+from histoomnist.data.size_factor import compute_size_factor, log_size_factor, row_sums
 
 
 @dataclass
@@ -74,7 +74,8 @@ def load_spot_table(
             raise ValueError(
                 f"size factor count mismatch for {sample_id}: sf={sf.shape[0]}, features={features.shape[0]}"
             )
-        valid = np.isfinite(sf) & (sf > 0)
+        totals = row_sums(counts)
+        valid = np.isfinite(sf) & (sf > 0) & np.isfinite(totals) & (totals >= float(min_total_counts))
     return SpotTable(
         sample_id=sample_id,
         features=features,
