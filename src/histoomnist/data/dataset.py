@@ -94,6 +94,14 @@ class SizeFactorDataset(Dataset):
         }
 
 
+def _read_gene_names(base: Path, row) -> list[str]:
+    genes_path = _optional_path(row, "genes_path")
+    if genes_path is None:
+        raise ValueError(f"Manifest row for {row.sample_id} does not include genes_path.")
+    path = base / str(genes_path)
+    return path.read_text(encoding="utf-8").splitlines()
+
+
 class ExpressionRateDataset(Dataset):
     def __init__(
         self,
@@ -104,6 +112,7 @@ class ExpressionRateDataset(Dataset):
         standardizer: FeatureStandardizer | None = None,
         fit_standardizer: bool = False,
         gene_indices: np.ndarray | None = None,
+        gene_names: list[str] | None = None,
     ):
         rows = manifest[manifest["split"].isin(splits)].copy()
         if rows.empty:
@@ -112,6 +121,9 @@ class ExpressionRateDataset(Dataset):
         ys: list[np.ndarray] = []
         log_sfs: list[np.ndarray] = []
         base = Path(base_dir)
+        self.genes = list(gene_names) if gene_names is not None else None
+        masks: list[np.ndarray] = []
+        sample_ids: list[str] = []
         for row in rows.itertuples(index=False):
             table = load_spot_table(
                 sample_id=str(row.sample_id),
@@ -127,8 +139,33 @@ class ExpressionRateDataset(Dataset):
             )
             mask = table.valid_mask
             counts = table.counts[mask]
-            if gene_indices is not None:
+            if gene_names is not None:
+                slide_genes = _read_gene_names(base, row)
+                gene_to_index = {gene: idx for idx, gene in enumerate(slide_genes)}
+                present_pairs = [
+                    (target_idx, gene_to_index[gene])
+                    for target_idx, gene in enumerate(gene_names)
+                    if gene in gene_to_index
+                ]
+                if not present_pairs:
+                    continue
+                target_indices = np.asarray([item[0] for item in present_pairs], dtype=np.int64)
+                source_indices = np.asarray([item[1] for item in present_pairs], dtype=np.int64)
+                selected_counts = counts[:, source_indices]
+                if sparse.issparse(selected_counts):
+                    selected_counts = selected_counts.toarray()
+                selected_counts = np.asarray(selected_counts, dtype=np.float32)
+                dense_counts = np.zeros((selected_counts.shape[0], len(gene_names)), dtype=np.float32)
+                dense_counts[:, target_indices] = selected_counts
+                measured = np.zeros_like(dense_counts, dtype=bool)
+                measured[:, target_indices] = True
+                counts = dense_counts
+                masks.append(measured)
+            elif gene_indices is not None:
                 counts = counts[:, gene_indices]
+                masks.append(np.ones((counts.shape[0], len(gene_indices)), dtype=bool))
+            else:
+                masks.append(np.ones((counts.shape[0], counts.shape[1]), dtype=bool))
             if sparse.issparse(counts):
                 counts = counts.toarray()
             counts = np.asarray(counts, dtype=np.float32)
@@ -136,9 +173,13 @@ class ExpressionRateDataset(Dataset):
             xs.append(table.features[mask])
             ys.append(np.log1p(rate).astype(np.float32))
             log_sfs.append(table.log_size_factor[mask].astype(np.float32)[:, None])
+            sample_ids.extend([table.sample_id] * int(mask.sum()))
         x = np.concatenate(xs, axis=0).astype(np.float32)
         y = np.concatenate(ys, axis=0).astype(np.float32)
+        self.raw_x = x
         self.true_log_sf = np.concatenate(log_sfs, axis=0).astype(np.float32)
+        self.expression_mask = np.concatenate(masks, axis=0).astype(bool)
+        self.sample_ids = np.asarray(sample_ids)
         self.standardizer = standardizer or FeatureStandardizer()
         if fit_standardizer:
             self.standardizer.fit(x)
@@ -153,4 +194,5 @@ class ExpressionRateDataset(Dataset):
             "features": torch.from_numpy(self.x[idx]),
             "log1p_rate": torch.from_numpy(self.y[idx]),
             "true_log_sf": torch.from_numpy(self.true_log_sf[idx]),
+            "expression_mask": torch.from_numpy(self.expression_mask[idx]),
         }

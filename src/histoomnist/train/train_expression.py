@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -10,6 +11,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from histoomnist.data.dataset import ExpressionRateDataset
+from histoomnist.data.gene_selection import selected_genes_from_config
 from histoomnist.models.expression_mlp import ExpressionRateRegressor
 from histoomnist.models.gene_conditioned import GeneConditionedRateRegressor
 from histoomnist.train.common import checkpoint_payload, save_checkpoint
@@ -22,12 +24,18 @@ def run_epoch(model, loader, loss_fn, device, optimizer=None) -> float:
     training = optimizer is not None
     model.train(training)
     losses: list[float] = []
-    for batch in tqdm(loader, leave=False):
+    for batch in tqdm(loader, leave=False, disable=not sys.stderr.isatty()):
         x = batch["features"].to(device)
         y = batch["log1p_rate"].to(device)
+        mask = batch.get("expression_mask")
+        mask = mask.to(device).bool() if mask is not None else None
         with torch.set_grad_enabled(training):
             pred = model(x)
-            loss = loss_fn(pred, y)
+            if mask is None:
+                loss = loss_fn(pred, y)
+            else:
+                values = (pred - y).pow(2)
+                loss = values[mask].mean()
             if training:
                 optimizer.zero_grad(set_to_none=True)
                 loss.backward()
@@ -64,12 +72,15 @@ def train(cfg: dict) -> Path:
     manifest = read_manifest(manifest_path)
     base_dir = manifest_path.parent
     min_total_counts = float(cfg["data"].get("min_total_counts", 1.0))
+    gene_names, gene_indices = selected_genes_from_config(cfg, base_dir=base_dir)
     train_ds = ExpressionRateDataset(
         manifest,
         base_dir=base_dir,
         splits=list(cfg["data"]["train_splits"]),
         min_total_counts=min_total_counts,
         fit_standardizer=True,
+        gene_names=gene_names,
+        gene_indices=gene_indices,
     )
     val_ds = ExpressionRateDataset(
         manifest,
@@ -77,6 +88,8 @@ def train(cfg: dict) -> Path:
         splits=list(cfg["data"]["val_splits"]),
         min_total_counts=min_total_counts,
         standardizer=train_ds.standardizer,
+        gene_names=gene_names,
+        gene_indices=gene_indices,
     )
     input_dim = train_ds.x.shape[1]
     output_dim = train_ds.y.shape[1]
@@ -117,6 +130,7 @@ def train(cfg: dict) -> Path:
                         "feature_mean": train_ds.standardizer.mean,
                         "feature_std": train_ds.standardizer.std,
                         "best_val_loss": best_val,
+                        "genes": train_ds.genes,
                     },
                 ),
             )

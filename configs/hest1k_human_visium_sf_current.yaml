@@ -1,0 +1,37 @@
+status: current_main_sf_model
+selected_on: "2026-05-18"
+
+model:
+  name: context_distribution_light
+  training_config: configs/hest1k_human_visium_sf_context_distribution_light.yaml
+  checkpoint: checkpoints/hest1k_human_visium_sf/context_distribution_light_hipt256_leave_slide_out/best.pt
+
+main_reporting_scope:
+  manifest: data/HEST-1k/manifests/human_visium_sf_manifest_highconf_context.csv
+  organ_subset:
+    - Breast
+    - Bowel
+    - Eye
+    - Skin
+    - Heart
+    - Brain
+
+selection_reason:
+  summary: >
+    Full-dataset trained context + light distribution model gives the best
+    high-confidence test correlation and tail recovery among evaluated candidates.
+  primary_metric: log_sf_pearson
+  comparator_notebook: notebooks/03_hest1k_highconf_sf_model.ipynb
+
+test_metrics_on_highconf:
+  log_sf_pearson: 0.7860
+  sf_pearson: 0.7190
+  log_sf_mae: 0.5131
+  log_sf_rmse: 0.7385
+  sf_std_ratio: 0.8251
+  sf_top_decile_mean_ratio: 0.7234
+
+notes:
+  - Low-confidence organs are excluded from main reporting, not erased from the project record.
+  - Full human Visium training currently performs better on the high-confidence subset than high-confidence-only retraining.
+  - Keep this SF model fixed for the next HE-to-ST count-scale experiments unless leave-cohort-out invalidates it.

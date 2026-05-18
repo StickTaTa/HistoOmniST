@@ -1,0 +1,78 @@
+seed: 2026
+device: auto
+
+project:
+  name: hest1k_human_visium_sf_highconf_context_distribution_light
+  description: "High-confidence human Visium HEST-1k SF prediction from HIPT context features with light distribution-shape loss."
+
+paths:
+  metadata_csv: data/HEST-1k/HEST_v1_3_0.csv
+  raw_root: data/HEST-1k/raw
+  processed_root: data/HEST-1k/processed
+  manifest: data/HEST-1k/manifests/human_visium_sf_manifest_highconf_context.csv
+  split_dir: data/HEST-1k/splits
+  output_root: results/hest1k_human_visium_sf
+  checkpoint_root: checkpoints/hest1k_human_visium_sf
+
+filters:
+  species: "Homo sapiens"
+  st_technology: "Visium"
+  organ_subset: ["Breast", "Bowel", "Eye", "Skin", "Heart", "Brain"]
+  min_spots_under_tissue: 200
+  require_raw_assets: false
+
+size_factor:
+  normalization: mean
+  target: log_mean_one_size_factor
+  min_total_counts: 1.0
+  eps: 1.0e-8
+
+data:
+  manifest: data/HEST-1k/manifests/human_visium_sf_manifest_highconf_context.csv
+  train_splits: ["train"]
+  val_splits: ["val"]
+  test_splits: ["test"]
+  count_target: all_genes
+  normalize_features: train_standardize
+  min_total_counts: 1.0
+
+model:
+  name: histoomnist_sf_highconf_context_distribution_light_net
+  architecture: residual_mlp
+  width: 768
+  depth: 5
+  dropout: 0.10
+  output: log_size_factor
+
+training:
+  batch_size: 512
+  epochs: 120
+  lr: 0.0002
+  weight_decay: 0.0001
+  loss: mse
+  huber_delta: 0.45
+  pearson_weight: 0.08
+  rank_weight: 0.03
+  rank_margin: 0.04
+  rank_max_pairs: 8192
+  tail_quantile: 0.70
+  tail_scale: 0.30
+  tail_weight: 4.0
+  tail_under_weight: 3.0
+  tail_distribution_weight: 0.75
+  tail_distribution_fraction: 0.20
+  tail_distribution_top_weight: 5.0
+  distribution_weight: 0.15
+  std_weight: 0.10
+  selection_metric: tail_score
+  selection_tail_quantile: 0.90
+  selection_under_weight: 1.0
+  selection_tail_mae_weight: 0.20
+  selection_std_weight: 0.75
+  selection_top_ratio_weight: 1.25
+  selection_corr_weight: 0.2
+  patience: 18
+
+output:
+  dir: checkpoints/hest1k_human_visium_sf/highconf_context_distribution_light_leave_slide_out
+  save_predictions: true
