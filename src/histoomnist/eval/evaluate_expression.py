@@ -1,6 +1,7 @@
 ﻿from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 import numpy as np
@@ -76,7 +77,12 @@ class GenePearsonAccumulator:
         }
 
 
-def evaluate(cfg: dict, checkpoint: str | Path, split_names: list[str] | None = None) -> dict[str, float]:
+def evaluate(
+    cfg: dict,
+    checkpoint: str | Path,
+    split_names: list[str] | None = None,
+    out_json: str | Path | None = None,
+) -> dict[str, float]:
     device = torch.device(get_device_name(cfg.get("device")))
     ckpt = load_checkpoint(checkpoint, map_location=str(device))
     manifest_path = Path(cfg["data"]["manifest"])
@@ -122,6 +128,10 @@ def evaluate(cfg: dict, checkpoint: str | Path, split_names: list[str] | None = 
     metrics = accumulator.summarize()
     for key, value in metrics.items():
         print(f"{key}: {value:.6f}")
+    if out_json is not None:
+        out_path = Path(out_json)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     return metrics
 
 
@@ -130,8 +140,9 @@ def main() -> None:
     parser.add_argument("--config", required=True)
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--splits", nargs="*", default=None)
+    parser.add_argument("--out-json", default=None)
     args = parser.parse_args()
-    evaluate(load_config(args.config), args.checkpoint, split_names=args.splits)
+    evaluate(load_config(args.config), args.checkpoint, split_names=args.splits, out_json=args.out_json)
 
 
 if __name__ == "__main__":
