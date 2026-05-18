@@ -352,6 +352,7 @@ def audit_generalization_tasks(
         "n_generated_task_files": int(len(file_frame)),
         "min_test_slides": int(min_test_slides),
         "val_fraction": float(val_fraction),
+        "max_task_files_per_type": None if max_task_files_per_type is None else int(max_task_files_per_type),
         "outputs": {
             "task_summary": rel_project_path(out_dir / "task_summary.csv"),
             "generated_task_files": rel_project_path(out_dir / "generated_task_files.csv"),
@@ -373,7 +374,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--val-fraction", type=float, default=0.1)
     parser.add_argument("--min-test-slides", type=int, default=5)
     parser.add_argument("--write-task-files", action="store_true")
-    parser.add_argument("--max-task-files-per-type", type=int, default=3)
+    parser.add_argument("--max-task-files-per-type", type=int, default=None)
     return parser.parse_args()
 
 

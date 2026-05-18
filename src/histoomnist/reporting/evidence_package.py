@@ -35,6 +35,16 @@ def read_csv_if_exists(path: Path) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
+def bool_series(frame: pd.DataFrame, column: str, default: bool) -> pd.Series:
+    if column not in frame.columns:
+        return pd.Series([default] * len(frame), index=frame.index)
+    values = frame[column]
+    if values.dtype == bool:
+        return values.fillna(default).astype(bool)
+    mapped = values.astype(str).str.lower().map({"true": True, "false": False})
+    return mapped.fillna(default).astype(bool)
+
+
 def write_json(path: Path, data: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(data, indent=2), encoding="utf-8")
@@ -53,6 +63,53 @@ def metric_from_method(df: pd.DataFrame, method: str, metric: str = "mean_gene_p
     if rows.empty:
         return None
     return float(rows.iloc[0][metric])
+
+
+def generalization_runs(root: Path) -> list[tuple[Path, dict[str, Any], pd.DataFrame]]:
+    runs_dir = root / EXPR_ROOT / "generalization_runs"
+    if not runs_dir.exists():
+        return []
+    runs = []
+    for summary_path in sorted(runs_dir.glob("*/summary.csv")):
+        summary = read_csv_if_exists(summary_path)
+        if summary.empty:
+            continue
+        manifest_path = summary_path.parent / "run_manifest.json"
+        manifest = read_json(manifest_path) if manifest_path.exists() else {"run_name": summary_path.parent.name}
+        runs.append((summary_path, manifest, summary))
+    return runs
+
+
+def is_smoke_generalization_run(manifest: dict[str, Any], run_name: str, stage: str) -> bool:
+    name = run_name.lower()
+    if "smoke" in name or "pilot" in name:
+        return True
+    if stage == "sf":
+        epochs = manifest.get("sf_epochs")
+        return epochs == 1
+    if stage == "expression":
+        epochs = manifest.get("expression_epochs")
+        return epochs == 1
+    if stage == "combined":
+        return manifest.get("sf_epochs") == 1 or manifest.get("expression_epochs") == 1
+    return False
+
+
+def generalization_metric(group: pd.DataFrame, stage: str) -> tuple[str, str]:
+    candidates = {
+        "sf": [("metric_log_sf_pearson", "mean_log_sf_pearson"), ("metric_sf_pearson", "mean_sf_pearson")],
+        "expression": [("metric_mean_gene_pearson", "mean_gene_pearson")],
+        "combined": [
+            ("metric_count_pred_sf_mean_gene_pearson", "mean_count_pred_sf_gene_pearson"),
+            ("metric_rate_mean_gene_pearson", "mean_rate_gene_pearson"),
+        ],
+    }
+    for column, label in candidates.get(stage, []):
+        if column in group.columns:
+            values = pd.to_numeric(group[column], errors="coerce").dropna()
+            if not values.empty:
+                return label, f"{float(values.mean()):.4f}"
+    return "", ""
 
 
 def build_benchmark_table(root: Path) -> pd.DataFrame:
@@ -119,7 +176,9 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     readiness_path = root / EXPR_ROOT / "generalization_readiness" / "run_summary.json"
     task_path = root / EXPR_ROOT / "generalization_readiness" / "task_summary.csv"
-    smoke_path = root / EXPR_ROOT / "generalization_runs" / "smoke_sf_generated_tasks_epoch1_runner" / "summary.csv"
+    ready_task_slugs_by_split: dict[str, set[str]] = {}
+    formal_completed_by_split: dict[str, set[str]] = {"leave_organ_out": set(), "leave_cohort_out": set()}
+    formal_sources_by_split: dict[str, set[str]] = {"leave_organ_out": set(), "leave_cohort_out": set()}
     if readiness_path.exists():
         readiness = read_json(readiness_path)
         rows.append(
@@ -138,14 +197,22 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
         )
     tasks = read_csv_if_exists(task_path)
     if not tasks.empty and {"split_type", "ready_for_split_specific_training"}.issubset(tasks.columns):
+        ready_mask = bool_series(tasks, "ready_for_split_specific_training", False) & bool_series(
+            tasks,
+            "passes_min_test_slides",
+            True,
+        )
         for split_type, group in tasks.groupby("split_type", sort=True):
+            ready_group = group[ready_mask.loc[group.index]]
+            if "task_slug" in group.columns:
+                ready_task_slugs_by_split[str(split_type)] = set(ready_group["task_slug"].astype(str))
             rows.append(
                 {
                     "item": f"{split_type}_ready_task_count",
                     "status": "readiness_audit",
                     "scope": split_type,
                     "n_tasks": int(len(group)),
-                    "n_ready_tasks": int(group["ready_for_split_specific_training"].sum()),
+                    "n_ready_tasks": int(len(ready_group)),
                     "n_generated_task_files": "",
                     "metric": "missing_asset_paths",
                     "value": int(group.get("n_missing_asset_paths", pd.Series([0])).sum()),
@@ -153,51 +220,84 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
                     "source_path": rel_project_path(task_path),
                 }
             )
-    smoke = read_csv_if_exists(smoke_path)
-    if not smoke.empty:
-        for _, row in smoke.iterrows():
+
+    for summary_path, manifest, summary in generalization_runs(root):
+        required = {"stage", "split_type", "status"}
+        if not required.issubset(summary.columns):
+            continue
+        run_name = str(manifest.get("run_name") or summary_path.parent.name)
+        for (stage_value, split_value), group in summary.groupby(["stage", "split_type"], sort=True):
+            stage = str(stage_value)
+            split_type = str(split_value)
+            ok_mask = group["status"].astype(str).eq("ok")
+            ok_count = int(ok_mask.sum())
+            if ok_count == len(group) and ok_count > 0:
+                status = "ok"
+            elif ok_count > 0:
+                status = "partial"
+            else:
+                status = str(group["status"].iloc[0]) if len(group) else "error"
+            smoke = is_smoke_generalization_run(manifest, run_name, stage)
+            if not smoke and stage in {"expression", "combined"} and "task_slug" in group.columns:
+                if split_type in formal_completed_by_split:
+                    formal_completed_by_split[split_type].update(group.loc[ok_mask, "task_slug"].astype(str))
+                    if ok_count:
+                        formal_sources_by_split[split_type].add(rel_project_path(summary_path))
+            metric, value = generalization_metric(group.loc[ok_mask] if ok_count else group, stage)
+            if smoke:
+                caveat = "Smoke/short-run aggregate; checks task plumbing only and is not formal generalization performance."
+            elif stage == "sf":
+                caveat = "SF generalization run; does not establish coverage95 expression/count generalization."
+            else:
+                caveat = "Run aggregate; manuscript claims require full ready task coverage and per-task inspection."
             rows.append(
                 {
-                    "item": f"sf_smoke_{row['split_type']}_{row['task_slug']}",
-                    "status": row["status"],
-                    "scope": f"{row['split_type']}:{row['heldout']}",
-                    "n_tasks": "",
-                    "n_ready_tasks": "",
+                    "item": f"generalization_run_{run_name}_{stage}_{split_type}",
+                    "status": status,
+                    "scope": split_type,
+                    "n_tasks": int(len(group)),
+                    "n_ready_tasks": ok_count,
                     "n_generated_task_files": "",
-                    "metric": "log_sf_pearson",
-                    "value": float(row["metric_log_sf_pearson"]),
-                    "caveat": "One-epoch SF smoke; not formal generalization performance.",
-                    "source_path": rel_project_path(smoke_path),
+                    "metric": metric,
+                    "value": value,
+                    "caveat": caveat,
+                    "source_path": rel_project_path(summary_path),
                 }
             )
-    rows.append(
-        {
-            "item": "formal_leave_organ_out_expression",
-            "status": "not_run",
-            "scope": "coverage95 expression/count",
-            "n_tasks": "",
-            "n_ready_tasks": "",
-            "n_generated_task_files": "",
-            "metric": "",
-            "value": "",
-            "caveat": "Runner and task files exist, but full expression generalization training/evaluation has not been run.",
-            "source_path": "",
-        }
-    )
-    rows.append(
-        {
-            "item": "formal_leave_cohort_out_expression",
-            "status": "not_run",
-            "scope": "coverage95 expression/count",
-            "n_tasks": "",
-            "n_ready_tasks": "",
-            "n_generated_task_files": "",
-            "metric": "",
-            "value": "",
-            "caveat": "Runner and task files exist, but full expression generalization training/evaluation has not been run.",
-            "source_path": "",
-        }
-    )
+
+    for split_type in ["leave_organ_out", "leave_cohort_out"]:
+        ready = ready_task_slugs_by_split.get(split_type, set())
+        completed = formal_completed_by_split.get(split_type, set())
+        sources = formal_sources_by_split.get(split_type, set())
+        if not ready:
+            status = "not_ready"
+            caveat = "No ready task set is available for this split type."
+        elif ready.issubset(completed):
+            status = "run"
+            caveat = "Full ready task set has formal expression/count outputs; inspect per-task metrics before manuscript claims."
+        elif completed:
+            status = "partial_not_final"
+            caveat = (
+                f"{len(completed)} of {len(ready)} ready tasks have formal expression/count outputs; "
+                "not sufficient for a final generalization claim."
+            )
+        else:
+            status = "not_run"
+            caveat = "Runner/task files exist, but full expression/count generalization training/evaluation has not been run."
+        rows.append(
+            {
+                "item": f"formal_{split_type}_expression",
+                "status": status,
+                "scope": "coverage95 expression/count",
+                "n_tasks": int(len(ready)),
+                "n_ready_tasks": int(len(completed)),
+                "n_generated_task_files": "",
+                "metric": "",
+                "value": "",
+                "caveat": caveat,
+                "source_path": "|".join(sorted(sources)),
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -370,6 +470,12 @@ def build_claim_table(
     ready_row = generalization[generalization["item"].astype(str).eq("generalization_task_readiness")]
     if not ready_row.empty:
         row = ready_row.iloc[0]
+        formal_rows = generalization[generalization["item"].astype(str).str.startswith("formal_leave_")]
+        formal_status = (
+            ", ".join(f"{item}:{status}" for item, status in formal_rows[["item", "status"]].itertuples(index=False))
+            if not formal_rows.empty
+            else "no formal expression/count summary rows"
+        )
         claims.append(
             {
                 "claim": "Leave-slide-out, leave-organ-out, and leave-cohort-out task files are prepared for formal generalization runs.",
@@ -378,7 +484,7 @@ def build_claim_table(
                     f"{int(row['n_ready_tasks'])}/{int(row['n_tasks'])} tasks ready; "
                     f"{int(row['n_generated_task_files'])} task-file sets generated."
                 ),
-                "limitation": "Only SF smoke runs exist; full coverage95 expression generalization metrics are not yet run.",
+                "limitation": f"Formal coverage95 expression/count generalization remains incomplete ({formal_status}).",
                 "source_path": "results/hest1k_human_visium_expression/generalization_readiness/run_summary.json",
             }
         )
@@ -558,7 +664,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "histoomnist_benchmark": f"{EXPR_ROOT}/benchmark_results/histoomnist_coverage95/summary.csv",
             "statistical_baselines": f"{EXPR_ROOT}/statistical_baselines/summary.csv",
             "generalization_readiness": f"{EXPR_ROOT}/generalization_readiness/run_summary.json",
-            "generalization_smoke": f"{EXPR_ROOT}/generalization_runs/smoke_sf_generated_tasks_epoch1_runner/summary.csv",
+            "generalization_runs": f"{EXPR_ROOT}/generalization_runs/*/summary.csv",
             "biological_signatures": f"{EXPR_ROOT}/biological_signatures/run_summary.json",
             "biological_signature_states": f"{EXPR_ROOT}/biological_signature_states/run_summary.json",
         },
