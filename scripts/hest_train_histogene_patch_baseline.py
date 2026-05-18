@@ -17,6 +17,7 @@ from histoomnist.external.train_histogene_patch import (  # noqa: E402
     export_histogene_patch_predictions,
     train_histogene_patch,
 )
+from histoomnist.eval.benchmark_predictions import evaluate_prediction_bundle  # noqa: E402
 from histoomnist.utils.config import load_config  # noqa: E402
 from histoomnist.utils.project_paths import resolve_project_path  # noqa: E402
 
@@ -41,6 +42,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--n-pos", type=int, default=64)
     parser.add_argument("--lr", type=float, default=1.0e-4)
     parser.add_argument("--weight-decay", type=float, default=0.0)
+    parser.add_argument("--seed", type=int, default=2026)
     parser.add_argument("--device", default=None)
     parser.add_argument("--max-train-slides", type=int, default=None)
     parser.add_argument("--max-val-slides", type=int, default=None)
@@ -50,6 +52,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-predict-chunks-per-slide", type=int, default=None)
     parser.add_argument("--max-predict-spots-per-slide", type=int, default=None)
     parser.add_argument("--export-predictions", action="store_true")
+    parser.add_argument("--evaluate-predictions", action="store_true")
+    parser.add_argument(
+        "--benchmark-out-dir",
+        default="results/hest1k_human_visium_expression/benchmark_results/histogene_patch_h5",
+    )
+    parser.add_argument("--benchmark-max-slides", type=int, default=None)
     return parser.parse_args()
 
 
@@ -84,9 +92,11 @@ def main() -> None:
         max_val_slides=args.max_val_slides,
         max_train_chunks_per_slide=args.max_train_chunks_per_slide,
         max_val_chunks_per_slide=args.max_val_chunks_per_slide,
+        seed=int(args.seed),
     )
     prediction_summary = None
-    if args.export_predictions:
+    benchmark_summary = None
+    if args.export_predictions or args.evaluate_predictions:
         prediction_root = resolve_project_path(
             args.prediction_root
             or "results/hest1k_human_visium_expression/external_baselines/histogene_patch_h5_predictions"
@@ -105,7 +115,26 @@ def main() -> None:
             max_chunks_per_slide=args.max_predict_chunks_per_slide,
             max_spots_per_slide=args.max_predict_spots_per_slide,
         )
-    summary = {"train": train_summary, "prediction": prediction_summary}
+        if args.evaluate_predictions:
+            if not bool(prediction_summary["benchmark_evaluable_without_truncation"]):
+                raise ValueError(
+                    "Refusing benchmark evaluation because exported predictions are truncated. "
+                    "Use full-slide prediction export with no max-predict truncation options."
+                )
+            benchmark_out_dir = resolve_project_path(args.benchmark_out_dir)
+            if benchmark_out_dir is None:
+                raise ValueError("Benchmark output dir resolved to None")
+            benchmark_summary = evaluate_prediction_bundle(
+                expression_config=cfg,
+                prediction_root=prediction_root,
+                method_name="histogene_patch_h5",
+                prediction_kind=str(prediction_summary["prediction_kind"]),
+                out_dir=benchmark_out_dir,
+                splits=[str(x) for x in args.test_splits],
+                prediction_genes_path=prediction_root / "genes.txt",
+                max_slides=args.benchmark_max_slides if args.benchmark_max_slides is not None else args.max_test_slides,
+            )
+    summary = {"train": train_summary, "prediction": prediction_summary, "benchmark": benchmark_summary}
     print(json.dumps(summary, indent=2), flush=True)
 
 

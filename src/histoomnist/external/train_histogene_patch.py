@@ -13,6 +13,7 @@ from histoomnist.external.histogene_model import HisToGeneChunkRegressor, masked
 from histoomnist.external.histogene_patch_h5 import HistogenePatchH5ChunkDataset
 from histoomnist.train.common import checkpoint_payload, load_checkpoint, save_checkpoint
 from histoomnist.utils.config import get_device_name
+from histoomnist.utils.seed import set_seed
 
 
 def build_histogene_model(model_cfg: dict[str, Any], *, n_genes: int) -> HisToGeneChunkRegressor:
@@ -73,7 +74,9 @@ def train_histogene_patch(
     max_val_slides: int | None = None,
     max_train_chunks_per_slide: int | None = None,
     max_val_chunks_per_slide: int | None = None,
+    seed: int = 2026,
 ) -> dict[str, Any]:
+    set_seed(int(seed))
     device = torch.device(get_device_name(device_name or expression_config.get("device")))
     train_ds = HistogenePatchH5ChunkDataset(
         expression_config,
@@ -145,6 +148,7 @@ def train_histogene_patch(
         "epochs": int(epochs),
         "batch_size": int(batch_size),
         "chunk_size": int(chunk_size),
+        "seed": int(seed),
         "train_splits": train_splits,
         "val_splits": val_splits,
         "n_train_slides": int(len(train_ds.slides)),
