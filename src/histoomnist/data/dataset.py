@@ -99,7 +99,7 @@ def _read_gene_names(base: Path, row) -> list[str]:
     genes_path = _optional_path(row, "genes_path")
     if genes_path is None:
         raise ValueError(f"Manifest row for {row.sample_id} does not include genes_path.")
-    path = base / str(genes_path)
+    path = (base / str(genes_path)).resolve(strict=False)
     return path.read_text(encoding="utf-8").splitlines()
 
 
@@ -109,7 +109,7 @@ def _read_gene_keys(base: Path, row, gene_key: str, raw_st_root: str | Path | No
         raise ValueError(f"Manifest row for {row.sample_id} does not include genes_path.")
     return load_gene_keys_for_slide(
         sample_id=str(row.sample_id),
-        processed_gene_path=base / str(genes_path),
+        processed_gene_path=(base / str(genes_path)).resolve(strict=False),
         gene_key=gene_key,
         raw_st_root=raw_st_root,
     )

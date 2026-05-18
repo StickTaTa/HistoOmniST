@@ -118,13 +118,40 @@ def summarise_task(
         "n_train_slides": int(split_counts.get("train", 0)),
         "n_val_slides": int(split_counts.get("val", 0)),
         "n_test_slides": int(split_counts.get("test", 0)),
+        "has_train_val_test": bool(len(train) > 0 and len(val) > 0 and len(test) > 0),
         "train_organs": "|".join(sorted(train["organ"].dropna().astype(str).unique())),
         "test_organs": "|".join(sorted(test["organ"].dropna().astype(str).unique())),
         "train_cohorts": "|".join(sorted(train["cohort"].dropna().astype(str).unique())),
         "test_cohorts": "|".join(sorted(test["cohort"].dropna().astype(str).unique())),
-        "ready_for_split_specific_training": bool(len(train) > 0 and len(val) > 0 and len(test) > 0),
     }
     return row
+
+
+def summarise_manifest_assets(task_manifest: pd.DataFrame, *, source_base: Path) -> dict[str, Any]:
+    checked = 0
+    missing = 0
+    examples: list[str] = []
+    for row in task_manifest.itertuples(index=False):
+        sample_id = str(getattr(row, "sample_id", "unknown"))
+        for column in MANIFEST_PATH_COLUMNS:
+            if not hasattr(row, column):
+                continue
+            value = getattr(row, column)
+            if value is None or (isinstance(value, float) and pd.isna(value)) or str(value).strip() == "":
+                continue
+            checked += 1
+            path = Path(str(value))
+            source_path = path if path.is_absolute() else source_base / path
+            if not source_path.resolve(strict=False).exists():
+                missing += 1
+                if len(examples) < 5:
+                    examples.append(f"{sample_id}:{column}:{str(source_path).replace(chr(92), '/')}")
+    return {
+        "n_asset_paths_checked": int(checked),
+        "n_missing_asset_paths": int(missing),
+        "assets_ready": bool(missing == 0),
+        "missing_asset_examples": "|".join(examples),
+    }
 
 
 def make_expression_task_config(
@@ -289,6 +316,8 @@ def audit_generalization_tasks(
                 heldout=heldout,
                 task_slug=task_slug,
             )
+            summary.update(summarise_manifest_assets(task_manifest, source_base=manifest_path.parent))
+            summary["ready_for_split_specific_training"] = bool(summary["has_train_val_test"] and summary["assets_ready"])
             summary["passes_min_test_slides"] = bool(summary["n_test_slides"] >= int(min_test_slides))
             rows.append(summary)
             can_write = write_files and summary["ready_for_split_specific_training"] and summary["passes_min_test_slides"]

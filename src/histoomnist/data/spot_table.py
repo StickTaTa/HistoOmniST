@@ -21,7 +21,7 @@ class SpotTable:
 
 
 def load_array(path: str | Path):
-    p = Path(path)
+    p = Path(path).resolve(strict=False)
     if p.suffix == ".npy":
         return np.load(p, allow_pickle=False)
     if p.suffix in {".pt", ".pth"}:
