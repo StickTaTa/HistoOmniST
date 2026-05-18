@@ -177,8 +177,14 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
     readiness_path = root / EXPR_ROOT / "generalization_readiness" / "run_summary.json"
     task_path = root / EXPR_ROOT / "generalization_readiness" / "task_summary.csv"
     ready_task_slugs_by_split: dict[str, set[str]] = {}
-    formal_completed_by_split: dict[str, set[str]] = {"leave_organ_out": set(), "leave_cohort_out": set()}
-    formal_sources_by_split: dict[str, set[str]] = {"leave_organ_out": set(), "leave_cohort_out": set()}
+    formal_completed_by_stage: dict[str, dict[str, set[str]]] = {
+        "expression": {"leave_organ_out": set(), "leave_cohort_out": set()},
+        "combined": {"leave_organ_out": set(), "leave_cohort_out": set()},
+    }
+    formal_sources_by_stage: dict[str, dict[str, set[str]]] = {
+        "expression": {"leave_organ_out": set(), "leave_cohort_out": set()},
+        "combined": {"leave_organ_out": set(), "leave_cohort_out": set()},
+    }
     if readiness_path.exists():
         readiness = read_json(readiness_path)
         rows.append(
@@ -238,11 +244,11 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
             else:
                 status = str(group["status"].iloc[0]) if len(group) else "error"
             smoke = is_smoke_generalization_run(manifest, run_name, stage)
-            if not smoke and stage in {"expression", "combined"} and "task_slug" in group.columns:
-                if split_type in formal_completed_by_split:
-                    formal_completed_by_split[split_type].update(group.loc[ok_mask, "task_slug"].astype(str))
+            if not smoke and stage in formal_completed_by_stage and "task_slug" in group.columns:
+                if split_type in formal_completed_by_stage[stage]:
+                    formal_completed_by_stage[stage][split_type].update(group.loc[ok_mask, "task_slug"].astype(str))
                     if ok_count:
-                        formal_sources_by_split[split_type].add(rel_project_path(summary_path))
+                        formal_sources_by_stage[stage][split_type].add(rel_project_path(summary_path))
             metric, value = generalization_metric(group.loc[ok_mask] if ok_count else group, stage)
             if smoke:
                 caveat = "Smoke/short-run aggregate; checks task plumbing only and is not formal generalization performance."
@@ -265,39 +271,44 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
                 }
             )
 
+    formal_stage_scopes = {
+        "expression": "coverage95 expression-rate",
+        "combined": "coverage95 count-scale",
+    }
     for split_type in ["leave_organ_out", "leave_cohort_out"]:
         ready = ready_task_slugs_by_split.get(split_type, set())
-        completed = formal_completed_by_split.get(split_type, set())
-        sources = formal_sources_by_split.get(split_type, set())
-        if not ready:
-            status = "not_ready"
-            caveat = "No ready task set is available for this split type."
-        elif ready.issubset(completed):
-            status = "run"
-            caveat = "Full ready task set has formal expression/count outputs; inspect per-task metrics before manuscript claims."
-        elif completed:
-            status = "partial_not_final"
-            caveat = (
-                f"{len(completed)} of {len(ready)} ready tasks have formal expression/count outputs; "
-                "not sufficient for a final generalization claim."
+        for stage, scope in formal_stage_scopes.items():
+            completed = formal_completed_by_stage[stage].get(split_type, set())
+            sources = formal_sources_by_stage[stage].get(split_type, set())
+            if not ready:
+                status = "not_ready"
+                caveat = "No ready task set is available for this split type."
+            elif ready.issubset(completed):
+                status = "run"
+                caveat = f"Full ready task set has formal {scope} outputs; inspect per-task metrics before manuscript claims."
+            elif completed:
+                status = "partial_not_final"
+                caveat = (
+                    f"{len(completed)} of {len(ready)} ready tasks have formal {scope} outputs; "
+                    "not sufficient for a final generalization claim."
+                )
+            else:
+                status = "not_run"
+                caveat = f"Runner/task files exist, but full {scope} training/evaluation has not been run."
+            rows.append(
+                {
+                    "item": f"formal_{split_type}_{stage}",
+                    "status": status,
+                    "scope": scope,
+                    "n_tasks": int(len(ready)),
+                    "n_ready_tasks": int(len(completed)),
+                    "n_generated_task_files": "",
+                    "metric": "",
+                    "value": "",
+                    "caveat": caveat,
+                    "source_path": "|".join(sorted(sources)),
+                }
             )
-        else:
-            status = "not_run"
-            caveat = "Runner/task files exist, but full expression/count generalization training/evaluation has not been run."
-        rows.append(
-            {
-                "item": f"formal_{split_type}_expression",
-                "status": status,
-                "scope": "coverage95 expression/count",
-                "n_tasks": int(len(ready)),
-                "n_ready_tasks": int(len(completed)),
-                "n_generated_task_files": "",
-                "metric": "",
-                "value": "",
-                "caveat": caveat,
-                "source_path": "|".join(sorted(sources)),
-            }
-        )
     return pd.DataFrame(rows)
 
 

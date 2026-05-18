@@ -41,6 +41,9 @@ class Tee:
         for stream in self.streams:
             stream.flush()
 
+    def isatty(self) -> bool:
+        return any(getattr(stream, "isatty", lambda: False)() for stream in self.streams)
+
 
 def rel_project_path(path: str | Path) -> str:
     p = Path(path)
