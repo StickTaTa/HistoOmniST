@@ -223,11 +223,78 @@ def build_biology_table(root: Path) -> pd.DataFrame:
     return out.reset_index(drop=True)
 
 
+def build_state_table(root: Path) -> pd.DataFrame:
+    state_root = root / EXPR_ROOT / "biological_signature_states"
+    summary_path = state_root / "run_summary.json"
+    overall_path = state_root / "state_fidelity_overall.csv"
+    organ_path = state_root / "state_fidelity_by_organ.csv"
+    annotations_path = state_root / "state_annotations.csv"
+    if not summary_path.exists() or not overall_path.exists():
+        return pd.DataFrame()
+    summary = read_json(summary_path)
+    overall = read_csv_if_exists(overall_path)
+    if overall.empty:
+        return pd.DataFrame()
+    overall_row = overall.iloc[0].to_dict()
+    rows = [
+        {
+            "level": "overall",
+            "group": "all",
+            "score_kind": summary.get("score_kind", overall_row.get("score_kind", "")),
+            "n_spots": int(overall_row.get("n_spots", summary.get("n_spots", 0))),
+            "n_states": int(overall_row.get("n_states", summary.get("n_states", 0))),
+            "adjusted_rand": float(overall_row.get("adjusted_rand", float("nan"))),
+            "normalized_mutual_info": float(overall_row.get("normalized_mutual_info", float("nan"))),
+            "best_match_accuracy": float(overall_row.get("best_match_accuracy", float("nan"))),
+            "dominant_state_signatures": "",
+            "source_path": rel_project_path(overall_path),
+        }
+    ]
+    organ = read_csv_if_exists(organ_path)
+    if not organ.empty:
+        for _, row in organ.iterrows():
+            rows.append(
+                {
+                    "level": "organ",
+                    "group": row["organ"],
+                    "score_kind": summary.get("score_kind", overall_row.get("score_kind", "")),
+                    "n_spots": int(row["n_spots"]),
+                    "n_states": int(overall_row.get("n_states", summary.get("n_states", 0))),
+                    "adjusted_rand": float(row["adjusted_rand"]),
+                    "normalized_mutual_info": float(row["normalized_mutual_info"]),
+                    "best_match_accuracy": float(row["best_match_accuracy"]),
+                    "dominant_state_signatures": "",
+                    "source_path": rel_project_path(organ_path),
+                }
+            )
+    annotations = read_csv_if_exists(annotations_path)
+    if not annotations.empty:
+        top_states = annotations.sort_values("n_true_spots", ascending=False).head(3)
+        rows.append(
+            {
+                "level": "state_annotation",
+                "group": "largest_true_states",
+                "score_kind": summary.get("score_kind", overall_row.get("score_kind", "")),
+                "n_spots": int(top_states["n_true_spots"].sum()),
+                "n_states": int(len(top_states)),
+                "adjusted_rand": "",
+                "normalized_mutual_info": "",
+                "best_match_accuracy": "",
+                "dominant_state_signatures": "; ".join(
+                    f"state{int(row['state'])}:{row['top_true_signatures']}" for _, row in top_states.iterrows()
+                ),
+                "source_path": rel_project_path(annotations_path),
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def build_claim_table(
     *,
     benchmark: pd.DataFrame,
     generalization: pd.DataFrame,
     biology: pd.DataFrame,
+    states: pd.DataFrame,
     diagnostics_summary: dict[str, Any],
 ) -> pd.DataFrame:
     claims: list[dict[str, Any]] = []
@@ -282,6 +349,22 @@ def build_claim_table(
                 ),
                 "limitation": "This is marker/signature fidelity, not pathway enrichment, cell deconvolution, or clinical validation.",
                 "source_path": "results/hest1k_human_visium_expression/biological_signatures/signature_summary.csv",
+            }
+        )
+    state_overall = states[states["level"].astype(str).eq("overall")] if not states.empty else pd.DataFrame()
+    if not state_overall.empty:
+        row = state_overall.iloc[0]
+        claims.append(
+            {
+                "claim": "Signature-derived local tissue states are partially recovered from predicted expression.",
+                "status": "supported_first_pass_partial",
+                "evidence": (
+                    f"{int(row['n_states'])} measured signature-state centroids; predicted assignments reach "
+                    f"ARI {float(row['adjusted_rand']):.3f}, NMI {float(row['normalized_mutual_info']):.3f}, "
+                    f"best-match accuracy {float(row['best_match_accuracy']):.3f}."
+                ),
+                "limitation": "States are derived from marker/signature scores, not independent pathology annotations or cell-type deconvolution.",
+                "source_path": "results/hest1k_human_visium_expression/biological_signature_states/state_fidelity_overall.csv",
             }
         )
     ready_row = generalization[generalization["item"].astype(str).eq("generalization_task_readiness")]
@@ -340,6 +423,7 @@ def build_markdown_report(
     benchmark: pd.DataFrame,
     generalization: pd.DataFrame,
     biology: pd.DataFrame,
+    states: pd.DataFrame,
     claims: pd.DataFrame,
 ) -> Path:
     sections = [
@@ -397,12 +481,29 @@ def build_markdown_report(
             ),
         ),
         (
+            "Signature-Derived States",
+            markdown_table(
+                states,
+                [
+                    "level",
+                    "group",
+                    "score_kind",
+                    "n_spots",
+                    "adjusted_rand",
+                    "normalized_mutual_info",
+                    "best_match_accuracy",
+                    "dominant_state_signatures",
+                ],
+                max_rows=18,
+            ),
+        ),
+        (
             "Next Required Evidence",
             "\n".join(
                 [
                     "1. Run full leave-organ-out and leave-cohort-out coverage95 expression/count evaluations.",
                     "2. Run at least one full external baseline under the unified coverage95 benchmark harness.",
-                    "3. Extend biological fidelity from marker signatures to pathway/module and cell-state analyses.",
+                    "3. Extend biological fidelity from marker/signature states to pathway modules, cell-type deconvolution, and pathology-anchored validation.",
                     "4. Generate final source-data tables for any manuscript figures after the formal runs complete.",
                 ]
             ),
@@ -419,10 +520,12 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     benchmark = build_benchmark_table(root)
     generalization = build_generalization_table(root)
     biology = build_biology_table(root)
+    states = build_state_table(root)
     claims = build_claim_table(
         benchmark=benchmark,
         generalization=generalization,
         biology=biology,
+        states=states,
         diagnostics_summary=diagnostics_summary,
     )
 
@@ -430,6 +533,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         "benchmark_table": out_dir / "benchmark_evidence_table.csv",
         "generalization_status": out_dir / "generalization_status.csv",
         "biological_signature_table": out_dir / "biological_signature_evidence_table.csv",
+        "signature_state_table": out_dir / "signature_state_evidence_table.csv",
         "claim_audit": out_dir / "claim_audit.csv",
         "report": out_dir / "histo_omnist_coverage95_evidence_report.md",
         "manifest": out_dir / "evidence_manifest.json",
@@ -437,12 +541,14 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     benchmark.to_csv(outputs["benchmark_table"], index=False)
     generalization.to_csv(outputs["generalization_status"], index=False)
     biology.to_csv(outputs["biological_signature_table"], index=False)
+    states.to_csv(outputs["signature_state_table"], index=False)
     claims.to_csv(outputs["claim_audit"], index=False)
     build_markdown_report(
         out_path=outputs["report"],
         benchmark=benchmark,
         generalization=generalization,
         biology=biology,
+        states=states,
         claims=claims,
     )
     manifest = {
@@ -454,11 +560,13 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "generalization_readiness": f"{EXPR_ROOT}/generalization_readiness/run_summary.json",
             "generalization_smoke": f"{EXPR_ROOT}/generalization_runs/smoke_sf_generated_tasks_epoch1_runner/summary.csv",
             "biological_signatures": f"{EXPR_ROOT}/biological_signatures/run_summary.json",
+            "biological_signature_states": f"{EXPR_ROOT}/biological_signature_states/run_summary.json",
         },
         "rows": {
             "benchmark_table": int(len(benchmark)),
             "generalization_status": int(len(generalization)),
             "biological_signature_table": int(len(biology)),
+            "signature_state_table": int(len(states)),
             "claim_audit": int(len(claims)),
         },
         "claim_status_counts": claims["status"].value_counts().to_dict() if not claims.empty else {},
