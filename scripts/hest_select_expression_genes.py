@@ -13,6 +13,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from histoomnist.data.gene_selection import load_gene_keys_for_slide  # noqa: E402
 from histoomnist.utils.io import read_manifest  # noqa: E402
 from histoomnist.utils.project_paths import resolve_project_path  # noqa: E402
 
@@ -21,9 +22,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Select common expressed genes for HEST expression-rate modeling.")
     parser.add_argument("--manifest", type=Path, default=Path("data/HEST-1k/manifests/human_visium_sf_manifest_highconf_context.csv"))
     parser.add_argument("--splits", nargs="*", default=["train"])
-    parser.add_argument("--top-n", type=int, default=256)
+    parser.add_argument("--top-n", type=int, default=256, help="Use <=0 to keep all genes passing filters.")
     parser.add_argument("--min-detected-spots", type=int, default=100)
     parser.add_argument("--min-slides-present", type=int, default=30)
+    parser.add_argument("--min-slide-fraction", type=float, default=None)
+    parser.add_argument("--gene-key", choices=["var_names", "symbol"], default="var_names")
+    parser.add_argument("--raw-st-root", type=Path, default=Path("data/HEST-1k/raw/st"))
     parser.add_argument("--out-genes", type=Path, default=Path("data/HEST-1k/manifests/highconf_top256_genes.txt"))
     parser.add_argument("--out-report", type=Path, default=Path("results/hest1k_human_visium_sf/highconf_top256_gene_selection.csv"))
     return parser.parse_args()
@@ -42,10 +46,6 @@ def _optional_path(row, name: str):
     return value
 
 
-def read_genes(path: Path) -> list[str]:
-    return path.read_text(encoding="utf-8").splitlines()
-
-
 def valid_mask_for_counts(counts) -> np.ndarray:
     totals = np.asarray(counts.sum(axis=1)).reshape(-1)
     return np.isfinite(totals) & (totals >= 1.0)
@@ -59,19 +59,29 @@ def main() -> None:
     if manifest.empty:
         raise ValueError(f"No manifest rows for splits={args.splits}")
     base_dir = manifest_path.parent
+    raw_st_root = resolve_project_path(args.raw_st_root)
 
-    slide_gene_lists: dict[str, list[str]] = {}
+    min_slides_present = int(args.min_slides_present)
+    if args.min_slide_fraction is not None:
+        min_slides_present = max(min_slides_present, int(np.ceil(float(args.min_slide_fraction) * len(manifest))))
+
+    slide_gene_lists: dict[str, list[str | None]] = {}
     present_slides: dict[str, int] = {}
     for row in manifest.itertuples(index=False):
         genes_path = _optional_path(row, "genes_path")
         if genes_path is None:
             raise ValueError(f"Missing genes_path for {row.sample_id}")
-        genes = read_genes(base_dir / str(genes_path))
+        genes = load_gene_keys_for_slide(
+            sample_id=str(row.sample_id),
+            processed_gene_path=base_dir / str(genes_path),
+            gene_key=str(args.gene_key),
+            raw_st_root=raw_st_root,
+        )
         slide_gene_lists[str(row.sample_id)] = genes
-        for gene in set(genes):
+        for gene in {gene for gene in genes if gene is not None}:
             present_slides[gene] = present_slides.get(gene, 0) + 1
     candidate_genes = sorted(
-        gene for gene, n_slides in present_slides.items() if n_slides >= int(args.min_slides_present)
+        gene for gene, n_slides in present_slides.items() if n_slides >= min_slides_present
     )
     if not candidate_genes:
         raise ValueError("No candidate genes passed the min-slides-present filter.")
@@ -79,6 +89,7 @@ def main() -> None:
 
     total_counts = np.zeros(len(candidate_genes), dtype=np.float64)
     detected_spots = np.zeros(len(candidate_genes), dtype=np.int64)
+    measured_spots = np.zeros(len(candidate_genes), dtype=np.int64)
     n_valid_spots = 0
 
     for row in manifest.itertuples(index=False):
@@ -88,19 +99,35 @@ def main() -> None:
         counts = counts[mask]
         n_valid_spots += int(mask.sum())
         genes = slide_gene_lists[sample_id]
-        slide_gene_to_index = {gene: idx for idx, gene in enumerate(genes)}
-        pairs = [
-            (candidate_index[gene], slide_gene_to_index[gene])
-            for gene in genes
-            if gene in candidate_index
-        ]
-        if not pairs:
+        if len(genes) != counts.shape[1]:
+            raise ValueError(f"Gene/count column mismatch for {sample_id}: genes={len(genes)} counts={counts.shape[1]}")
+        source_indices: list[int] = []
+        target_indices: list[int] = []
+        for source_idx, gene in enumerate(genes):
+            if gene is None:
+                continue
+            target_idx = candidate_index.get(gene)
+            if target_idx is None:
+                continue
+            source_indices.append(source_idx)
+            target_indices.append(target_idx)
+        if not source_indices:
             continue
-        target_indices = np.asarray([item[0] for item in pairs], dtype=np.int64)
-        indices = np.asarray([item[1] for item in pairs], dtype=np.int64)
-        sub = counts[:, indices].tocsr()
-        total_counts[target_indices] += np.asarray(sub.sum(axis=0)).reshape(-1)
-        detected_spots[target_indices] += np.asarray((sub > 0).sum(axis=0)).reshape(-1)
+        target_indices_array = np.asarray(target_indices, dtype=np.int64)
+        source_indices_array = np.asarray(source_indices, dtype=np.int64)
+        sub = counts[:, source_indices_array].astype(np.float32).tocsr()
+        mapper = sparse.csr_matrix(
+            (
+                np.ones(target_indices_array.shape[0], dtype=np.float32),
+                (np.arange(target_indices_array.shape[0]), target_indices_array),
+            ),
+            shape=(target_indices_array.shape[0], len(candidate_genes)),
+        )
+        selected = (sub @ mapper).tocsr()
+        present_targets = np.unique(target_indices_array)
+        measured_spots[present_targets] += int(mask.sum())
+        total_counts += np.asarray(selected.sum(axis=0)).reshape(-1)
+        detected_spots += np.asarray((selected > 0).sum(axis=0)).reshape(-1)
         print(f"processed {sample_id} valid_spots={int(mask.sum())}", flush=True)
 
     mean_count = total_counts / max(n_valid_spots, 1)
@@ -108,15 +135,18 @@ def main() -> None:
         {
             "gene": candidate_genes,
             "slides_present": [present_slides[gene] for gene in candidate_genes],
+            "slide_fraction": [present_slides[gene] / len(manifest) for gene in candidate_genes],
+            "measured_spots": measured_spots,
             "total_count": total_counts,
             "mean_count": mean_count,
             "detected_spots": detected_spots,
             "detected_fraction": detected_spots / max(n_valid_spots, 1),
+            "detected_fraction_measured": detected_spots / np.maximum(measured_spots, 1),
         }
     )
     report = report[report["detected_spots"] >= int(args.min_detected_spots)].copy()
-    report = report.sort_values(["detected_spots", "total_count"], ascending=False).reset_index(drop=True)
-    selected = report.head(int(args.top_n)).copy()
+    report = report.sort_values(["slides_present", "detected_spots", "total_count"], ascending=False).reset_index(drop=True)
+    selected = report.copy() if int(args.top_n) <= 0 else report.head(int(args.top_n)).copy()
     if selected.empty:
         raise ValueError("No genes passed selection filters.")
 
@@ -127,6 +157,7 @@ def main() -> None:
     out_genes.write_text("\n".join(selected["gene"].astype(str).tolist()) + "\n", encoding="utf-8")
     report.to_csv(out_report, index=False)
     print(f"candidate_genes={len(candidate_genes)} valid_spots={n_valid_spots}")
+    print(f"min_slides_present={min_slides_present}")
     print(f"selected_genes={len(selected)}")
     print(f"wrote {out_genes}")
     print(f"wrote {out_report}")

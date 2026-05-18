@@ -8,6 +8,7 @@ import torch
 from scipy import sparse
 from torch.utils.data import Dataset
 
+from histoomnist.data.gene_selection import load_gene_keys_for_slide
 from histoomnist.data.spot_table import load_spot_table
 
 
@@ -102,6 +103,18 @@ def _read_gene_names(base: Path, row) -> list[str]:
     return path.read_text(encoding="utf-8").splitlines()
 
 
+def _read_gene_keys(base: Path, row, gene_key: str, raw_st_root: str | Path | None) -> list[str | None]:
+    genes_path = _optional_path(row, "genes_path")
+    if genes_path is None:
+        raise ValueError(f"Manifest row for {row.sample_id} does not include genes_path.")
+    return load_gene_keys_for_slide(
+        sample_id=str(row.sample_id),
+        processed_gene_path=base / str(genes_path),
+        gene_key=gene_key,
+        raw_st_root=raw_st_root,
+    )
+
+
 class ExpressionRateDataset(Dataset):
     def __init__(
         self,
@@ -113,6 +126,9 @@ class ExpressionRateDataset(Dataset):
         fit_standardizer: bool = False,
         gene_indices: np.ndarray | None = None,
         gene_names: list[str] | None = None,
+        gene_key: str = "var_names",
+        raw_st_root: str | Path | None = None,
+        lazy_expression_threshold: int = 2048,
     ):
         rows = manifest[manifest["split"].isin(splits)].copy()
         if rows.empty:
@@ -122,6 +138,13 @@ class ExpressionRateDataset(Dataset):
         log_sfs: list[np.ndarray] = []
         base = Path(base_dir)
         self.genes = list(gene_names) if gene_names is not None else None
+        self.output_dim = len(gene_names) if gene_names is not None else None
+        self.lazy_expression = gene_names is not None and len(gene_names) > int(lazy_expression_threshold)
+        self._slide_counts: list[sparse.csr_matrix] = []
+        self._slide_measured: list[np.ndarray] = []
+        self._row_slide: list[int] = []
+        self._row_local: list[int] = []
+        self._slide_size_factor: list[np.ndarray] = []
         masks: list[np.ndarray] = []
         sample_ids: list[str] = []
         for row in rows.itertuples(index=False):
@@ -140,27 +163,50 @@ class ExpressionRateDataset(Dataset):
             mask = table.valid_mask
             counts = table.counts[mask]
             if gene_names is not None:
-                slide_genes = _read_gene_names(base, row)
-                gene_to_index = {gene: idx for idx, gene in enumerate(slide_genes)}
-                present_pairs = [
-                    (target_idx, gene_to_index[gene])
-                    for target_idx, gene in enumerate(gene_names)
-                    if gene in gene_to_index
-                ]
-                if not present_pairs:
+                slide_genes = _read_gene_keys(base, row, gene_key=gene_key, raw_st_root=raw_st_root)
+                gene_to_target = {gene: idx for idx, gene in enumerate(gene_names)}
+                source_indices: list[int] = []
+                target_indices: list[int] = []
+                for source_idx, gene in enumerate(slide_genes):
+                    if gene is None:
+                        continue
+                    target_idx = gene_to_target.get(gene)
+                    if target_idx is None:
+                        continue
+                    source_indices.append(source_idx)
+                    target_indices.append(target_idx)
+                if not source_indices:
                     continue
-                target_indices = np.asarray([item[0] for item in present_pairs], dtype=np.int64)
-                source_indices = np.asarray([item[1] for item in present_pairs], dtype=np.int64)
-                selected_counts = counts[:, source_indices]
-                if sparse.issparse(selected_counts):
-                    selected_counts = selected_counts.toarray()
-                selected_counts = np.asarray(selected_counts, dtype=np.float32)
-                dense_counts = np.zeros((selected_counts.shape[0], len(gene_names)), dtype=np.float32)
-                dense_counts[:, target_indices] = selected_counts
-                measured = np.zeros_like(dense_counts, dtype=bool)
-                measured[:, target_indices] = True
-                counts = dense_counts
-                masks.append(measured)
+                source_indices_array = np.asarray(source_indices, dtype=np.int64)
+                target_indices_array = np.asarray(target_indices, dtype=np.int64)
+                measured = np.zeros(len(gene_names), dtype=bool)
+                measured[np.unique(target_indices_array)] = True
+                counts = counts.tocsr() if sparse.issparse(counts) else sparse.csr_matrix(counts)
+                selected_source_counts = counts[:, source_indices_array].astype(np.float32).tocsr()
+                mapper = sparse.csr_matrix(
+                    (
+                        np.ones(target_indices_array.shape[0], dtype=np.float32),
+                        (np.arange(target_indices_array.shape[0]), target_indices_array),
+                    ),
+                    shape=(target_indices_array.shape[0], len(gene_names)),
+                )
+                selected_counts = (selected_source_counts @ mapper).tocsr()
+                if self.lazy_expression:
+                    slide_idx = len(self._slide_counts)
+                    n_rows = selected_counts.shape[0]
+                    self._slide_counts.append(selected_counts)
+                    self._slide_measured.append(measured)
+                    self._slide_size_factor.append(table.size_factor[mask].astype(np.float32))
+                    self._row_slide.extend([slide_idx] * n_rows)
+                    self._row_local.extend(range(n_rows))
+                    xs.append(table.features[mask])
+                    log_sfs.append(table.log_size_factor[mask].astype(np.float32)[:, None])
+                    sample_ids.extend([table.sample_id] * int(mask.sum()))
+                    continue
+                else:
+                    dense_counts = selected_counts.toarray().astype(np.float32)
+                    counts = dense_counts
+                    masks.append(np.broadcast_to(measured, dense_counts.shape).copy())
             elif gene_indices is not None:
                 counts = counts[:, gene_indices]
                 masks.append(np.ones((counts.shape[0], len(gene_indices)), dtype=bool))
@@ -171,28 +217,51 @@ class ExpressionRateDataset(Dataset):
             counts = np.asarray(counts, dtype=np.float32)
             rate = counts / np.clip(table.size_factor[mask, None], 1e-6, None)
             xs.append(table.features[mask])
-            ys.append(np.log1p(rate).astype(np.float32))
+            if not self.lazy_expression:
+                ys.append(np.log1p(rate).astype(np.float32))
             log_sfs.append(table.log_size_factor[mask].astype(np.float32)[:, None])
             sample_ids.extend([table.sample_id] * int(mask.sum()))
+        if not xs:
+            raise ValueError(f"No usable expression rows for splits={splits}")
         x = np.concatenate(xs, axis=0).astype(np.float32)
-        y = np.concatenate(ys, axis=0).astype(np.float32)
         self.raw_x = x
         self.true_log_sf = np.concatenate(log_sfs, axis=0).astype(np.float32)
-        self.expression_mask = np.concatenate(masks, axis=0).astype(bool)
+        self.expression_mask = None if self.lazy_expression else np.concatenate(masks, axis=0).astype(bool)
         self.sample_ids = np.asarray(sample_ids)
+        self._row_slide_array = np.asarray(self._row_slide, dtype=np.int32) if self.lazy_expression else None
+        self._row_local_array = np.asarray(self._row_local, dtype=np.int32) if self.lazy_expression else None
         self.standardizer = standardizer or FeatureStandardizer()
         if fit_standardizer:
             self.standardizer.fit(x)
         self.x = self.standardizer.transform(x)
-        self.y = y
+        if self.lazy_expression:
+            self.y = None
+            self.output_dim = len(gene_names)
+        else:
+            y = np.concatenate(ys, axis=0).astype(np.float32)
+            self.y = y
+            self.output_dim = y.shape[1]
 
     def __len__(self) -> int:
         return self.x.shape[0]
 
     def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
+        if self.lazy_expression:
+            if self._row_slide_array is None or self._row_local_array is None:
+                raise RuntimeError("Lazy expression index arrays were not initialized.")
+            slide_idx = int(self._row_slide_array[idx])
+            local_idx = int(self._row_local_array[idx])
+            counts = self._slide_counts[slide_idx].getrow(local_idx).toarray().reshape(-1).astype(np.float32)
+            sf = float(max(self._slide_size_factor[slide_idx][local_idx], 1e-6))
+            y = np.log1p(counts / sf).astype(np.float32)
+            expression_mask = self._slide_measured[slide_idx]
+        else:
+            y = self.y[idx]
+            expression_mask = self.expression_mask[idx]
         return {
             "features": torch.from_numpy(self.x[idx]),
-            "log1p_rate": torch.from_numpy(self.y[idx]),
+            "raw_features": torch.from_numpy(self.raw_x[idx]),
+            "log1p_rate": torch.from_numpy(y),
             "true_log_sf": torch.from_numpy(self.true_log_sf[idx]),
-            "expression_mask": torch.from_numpy(self.expression_mask[idx]),
+            "expression_mask": torch.from_numpy(expression_mask),
         }

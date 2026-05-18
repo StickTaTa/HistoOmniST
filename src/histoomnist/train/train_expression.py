@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from histoomnist.data.dataset import ExpressionRateDataset
-from histoomnist.data.gene_selection import selected_genes_from_config
+from histoomnist.data.gene_selection import gene_key_settings_from_config, selected_genes_from_config
 from histoomnist.models.expression_mlp import ExpressionRateRegressor
 from histoomnist.models.gene_conditioned import GeneConditionedRateRegressor
 from histoomnist.train.common import checkpoint_payload, save_checkpoint
@@ -73,6 +73,7 @@ def train(cfg: dict) -> Path:
     base_dir = manifest_path.parent
     min_total_counts = float(cfg["data"].get("min_total_counts", 1.0))
     gene_names, gene_indices = selected_genes_from_config(cfg, base_dir=base_dir)
+    gene_key, raw_st_root = gene_key_settings_from_config(cfg)
     train_ds = ExpressionRateDataset(
         manifest,
         base_dir=base_dir,
@@ -81,6 +82,8 @@ def train(cfg: dict) -> Path:
         fit_standardizer=True,
         gene_names=gene_names,
         gene_indices=gene_indices,
+        gene_key=gene_key,
+        raw_st_root=raw_st_root,
     )
     val_ds = ExpressionRateDataset(
         manifest,
@@ -90,9 +93,11 @@ def train(cfg: dict) -> Path:
         standardizer=train_ds.standardizer,
         gene_names=gene_names,
         gene_indices=gene_indices,
+        gene_key=gene_key,
+        raw_st_root=raw_st_root,
     )
     input_dim = train_ds.x.shape[1]
-    output_dim = train_ds.y.shape[1]
+    output_dim = int(train_ds.output_dim)
     model = build_rate_model(cfg, input_dim=input_dim, output_dim=output_dim).to(device)
     train_loader = DataLoader(train_ds, batch_size=int(cfg["training"]["batch_size"]), shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=int(cfg["training"]["batch_size"]), shuffle=False)

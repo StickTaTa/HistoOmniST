@@ -8,8 +8,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from histoomnist.data.dataset import ExpressionRateDataset, FeatureStandardizer
-from histoomnist.data.gene_selection import selected_genes_from_config
-from histoomnist.eval.metrics import summarize_genewise
+from histoomnist.data.gene_selection import gene_key_settings_from_config, selected_genes_from_config
 from histoomnist.models.expression_mlp import ExpressionRateRegressor
 from histoomnist.models.gene_conditioned import GeneConditionedRateRegressor
 from histoomnist.train.common import load_checkpoint
@@ -40,12 +39,50 @@ def summarize_genewise_masked(pred: np.ndarray, true: np.ndarray, mask: np.ndarr
     }
 
 
+class GenePearsonAccumulator:
+    def __init__(self, n_genes: int):
+        self.n = np.zeros(n_genes, dtype=np.float64)
+        self.sum_x = np.zeros(n_genes, dtype=np.float64)
+        self.sum_y = np.zeros(n_genes, dtype=np.float64)
+        self.sum_x2 = np.zeros(n_genes, dtype=np.float64)
+        self.sum_y2 = np.zeros(n_genes, dtype=np.float64)
+        self.sum_xy = np.zeros(n_genes, dtype=np.float64)
+
+    def update(self, pred: np.ndarray, true: np.ndarray, mask: np.ndarray) -> None:
+        if pred.shape != true.shape or pred.shape != mask.shape:
+            raise ValueError(f"shape mismatch: pred={pred.shape}, true={true.shape}, mask={mask.shape}")
+        valid = mask.astype(bool) & np.isfinite(pred) & np.isfinite(true)
+        x = np.where(valid, pred, 0.0).astype(np.float64)
+        y = np.where(valid, true, 0.0).astype(np.float64)
+        self.n += valid.sum(axis=0)
+        self.sum_x += x.sum(axis=0)
+        self.sum_y += y.sum(axis=0)
+        self.sum_x2 += (x * x).sum(axis=0)
+        self.sum_y2 += (y * y).sum(axis=0)
+        self.sum_xy += (x * y).sum(axis=0)
+
+    def summarize(self) -> dict[str, float]:
+        numerator = self.sum_xy - (self.sum_x * self.sum_y / np.maximum(self.n, 1.0))
+        denom_x = self.sum_x2 - (self.sum_x * self.sum_x / np.maximum(self.n, 1.0))
+        denom_y = self.sum_y2 - (self.sum_y * self.sum_y / np.maximum(self.n, 1.0))
+        denom = np.sqrt(np.maximum(denom_x, 0.0) * np.maximum(denom_y, 0.0))
+        vals = np.full_like(numerator, np.nan, dtype=np.float64)
+        keep = (self.n >= 3) & (denom > 0)
+        vals[keep] = numerator[keep] / denom[keep]
+        return {
+            "mean_gene_pearson": float(np.nanmean(vals)),
+            "median_gene_pearson": float(np.nanmedian(vals)),
+            "valid_genes": int(np.isfinite(vals).sum()),
+        }
+
+
 def evaluate(cfg: dict, checkpoint: str | Path, split_names: list[str] | None = None) -> dict[str, float]:
     device = torch.device(get_device_name(cfg.get("device")))
     ckpt = load_checkpoint(checkpoint, map_location=str(device))
     manifest_path = Path(cfg["data"]["manifest"])
     manifest = read_manifest(manifest_path)
     gene_names, gene_indices = selected_genes_from_config(cfg, base_dir=manifest_path.parent)
+    gene_key, raw_st_root = gene_key_settings_from_config(cfg)
     ds = ExpressionRateDataset(
         manifest,
         base_dir=manifest_path.parent,
@@ -54,6 +91,8 @@ def evaluate(cfg: dict, checkpoint: str | Path, split_names: list[str] | None = 
         standardizer=FeatureStandardizer(mean=ckpt["feature_mean"], std=ckpt["feature_std"]),
         gene_names=gene_names,
         gene_indices=gene_indices,
+        gene_key=gene_key,
+        raw_st_root=raw_st_root,
     )
     model_name = ckpt.get("model_name", cfg["model"].get("name", "expression_mlp"))
     kwargs = ckpt.get("model_kwargs", {})
@@ -75,23 +114,12 @@ def evaluate(cfg: dict, checkpoint: str | Path, split_names: list[str] | None = 
     model.load_state_dict(ckpt["model_state"])
     model.eval()
     loader = DataLoader(ds, batch_size=int(cfg["training"]["batch_size"]), shuffle=False)
-    preds: list[np.ndarray] = []
-    trues: list[np.ndarray] = []
-    masks: list[np.ndarray] = []
+    accumulator = GenePearsonAccumulator(int(ckpt["output_dim"]))
     with torch.no_grad():
         for batch in loader:
             pred = model(batch["features"].to(device)).cpu().numpy()
-            preds.append(pred)
-            trues.append(batch["log1p_rate"].numpy())
-            masks.append(batch["expression_mask"].numpy().astype(bool))
-    pred_all = np.concatenate(preds)
-    true_all = np.concatenate(trues)
-    mask_all = np.concatenate(masks)
-    metrics = (
-        summarize_genewise_masked(pred_all, true_all, mask_all)
-        if not np.all(mask_all)
-        else summarize_genewise(pred_all, true_all)
-    )
+            accumulator.update(pred, batch["log1p_rate"].numpy(), batch["expression_mask"].numpy().astype(bool))
+    metrics = accumulator.summarize()
     for key, value in metrics.items():
         print(f"{key}: {value:.6f}")
     return metrics

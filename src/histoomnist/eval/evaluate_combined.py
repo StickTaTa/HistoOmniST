@@ -9,9 +9,9 @@ import torch
 from torch.utils.data import DataLoader
 
 from histoomnist.data.dataset import ExpressionRateDataset, FeatureStandardizer
-from histoomnist.data.gene_selection import selected_genes_from_config
-from histoomnist.eval.metrics import sf_metrics, summarize_genewise
-from histoomnist.eval.evaluate_expression import summarize_genewise_masked
+from histoomnist.data.gene_selection import gene_key_settings_from_config, selected_genes_from_config
+from histoomnist.eval.metrics import sf_metrics
+from histoomnist.eval.evaluate_expression import GenePearsonAccumulator
 from histoomnist.models.expression_mlp import ExpressionRateRegressor
 from histoomnist.models.gene_conditioned import GeneConditionedRateRegressor
 from histoomnist.models.sf_model import SizeFactorRegressor
@@ -78,6 +78,7 @@ def evaluate(
     manifest = read_manifest(manifest_path)
     splits = split_names or list(expression_config["data"]["test_splits"])
     gene_names, gene_indices = selected_genes_from_config(expression_config, base_dir=manifest_path.parent)
+    gene_key, raw_st_root = gene_key_settings_from_config(expression_config)
 
     rate_ds = ExpressionRateDataset(
         manifest,
@@ -87,57 +88,65 @@ def evaluate(
         standardizer=FeatureStandardizer(mean=rate_ckpt["feature_mean"], std=rate_ckpt["feature_std"]),
         gene_names=gene_names,
         gene_indices=gene_indices,
+        gene_key=gene_key,
+        raw_st_root=raw_st_root,
     )
     sf_model = _load_sf_model(sf_config, sf_ckpt, device)
     rate_model = _load_rate_model(expression_config, rate_ckpt, device)
 
     rate_loader = DataLoader(rate_ds, batch_size=int(expression_config["training"]["batch_size"]), shuffle=False)
 
-    pred_rates: list[np.ndarray] = []
-    true_rates: list[np.ndarray] = []
-    true_log_sfs: list[np.ndarray] = []
-    expression_masks: list[np.ndarray] = []
+    pred_sf = np.empty(len(rate_ds), dtype=np.float32)
+    true_log_sf = np.empty(len(rate_ds), dtype=np.float32)
+    sf_standardizer = FeatureStandardizer(mean=sf_ckpt["feature_mean"], std=sf_ckpt["feature_std"])
+    offset = 0
     with torch.no_grad():
         for batch in rate_loader:
-            pred_log1p_rate = rate_model(batch["features"].to(device)).cpu().numpy()
-            pred_rates.append(np.expm1(pred_log1p_rate).clip(min=0.0))
-            true_rates.append(np.expm1(batch["log1p_rate"].numpy()))
-            true_log_sfs.append(batch["true_log_sf"].numpy())
-            expression_masks.append(batch["expression_mask"].numpy().astype(bool))
+            raw_features = batch["raw_features"].numpy()
+            sf_features = sf_standardizer.transform(raw_features)
+            batch_pred_log_sf = sf_model(torch.from_numpy(sf_features).to(device)).cpu().numpy().reshape(-1)
+            batch_true_log_sf = batch["true_log_sf"].numpy().reshape(-1)
+            stop = offset + batch_pred_log_sf.shape[0]
+            pred_sf[offset:stop] = np.exp(batch_pred_log_sf).astype(np.float32)
+            true_log_sf[offset:stop] = batch_true_log_sf.astype(np.float32)
+            offset = stop
 
-    pred_log_sfs: list[np.ndarray] = []
-    sf_standardizer = FeatureStandardizer(mean=sf_ckpt["feature_mean"], std=sf_ckpt["feature_std"])
-    sf_features = sf_standardizer.transform(rate_ds.raw_x)
-    with torch.no_grad():
-        batch_size = int(sf_config["training"]["batch_size"])
-        for start in range(0, sf_features.shape[0], batch_size):
-            stop = min(start + batch_size, sf_features.shape[0])
-            x = torch.from_numpy(sf_features[start:stop]).to(device)
-            pred_log_sfs.append(sf_model(x).cpu().numpy())
-
-    pred_rate = np.concatenate(pred_rates, axis=0)
-    true_rate = np.concatenate(true_rates, axis=0)
-    true_log_sf = np.concatenate(true_log_sfs, axis=0)
-    pred_log_sf = np.concatenate(pred_log_sfs, axis=0)
-    expression_mask = np.concatenate(expression_masks, axis=0)
-
-    pred_sf = np.exp(pred_log_sf).reshape(-1)
     for sample_id in np.unique(rate_ds.sample_ids):
         idx = rate_ds.sample_ids == sample_id
         pred_sf[idx] = pred_sf[idx] / (pred_sf[idx].mean() + 1e-8)
-    true_sf = np.exp(true_log_sf)
-    true_count = true_rate * true_sf
-    pred_count_no_sf = pred_rate
-    pred_count_pred_sf = pred_rate * pred_sf[:, None]
-    pred_count_oracle_sf = pred_rate * true_sf
+    true_log_sf = true_log_sf.reshape(-1)
 
     metrics: dict[str, float] = {}
     metrics.update({f"sf_{k}": v for k, v in sf_metrics(np.log(pred_sf + 1e-8), true_log_sf).items()})
-    summarize = summarize_genewise_masked if not np.all(expression_mask) else lambda p, t, m: summarize_genewise(p, t)
-    metrics.update({f"rate_{k}": v for k, v in summarize(pred_rate, true_rate, expression_mask).items()})
-    metrics.update({f"count_no_sf_{k}": v for k, v in summarize(pred_count_no_sf, true_count, expression_mask).items()})
-    metrics.update({f"count_pred_sf_{k}": v for k, v in summarize(pred_count_pred_sf, true_count, expression_mask).items()})
-    metrics.update({f"count_oracle_sf_{k}": v for k, v in summarize(pred_count_oracle_sf, true_count, expression_mask).items()})
+
+    n_genes = int(rate_ckpt["output_dim"])
+    rate_acc = GenePearsonAccumulator(n_genes)
+    count_no_sf_acc = GenePearsonAccumulator(n_genes)
+    count_pred_sf_acc = GenePearsonAccumulator(n_genes)
+    count_oracle_sf_acc = GenePearsonAccumulator(n_genes)
+
+    offset = 0
+    with torch.no_grad():
+        for batch in rate_loader:
+            pred_log1p_rate = rate_model(batch["features"].to(device)).cpu().numpy()
+            pred_rate = np.expm1(pred_log1p_rate).clip(min=0.0)
+            true_rate = np.expm1(batch["log1p_rate"].numpy())
+            expression_mask = batch["expression_mask"].numpy().astype(bool)
+            batch_size = pred_rate.shape[0]
+            stop = offset + batch_size
+            batch_pred_sf = pred_sf[offset:stop]
+            batch_true_sf = np.exp(batch["true_log_sf"].numpy().reshape(-1))
+            true_count = true_rate * batch_true_sf[:, None]
+            rate_acc.update(pred_rate, true_rate, expression_mask)
+            count_no_sf_acc.update(pred_rate, true_count, expression_mask)
+            count_pred_sf_acc.update(pred_rate * batch_pred_sf[:, None], true_count, expression_mask)
+            count_oracle_sf_acc.update(pred_rate * batch_true_sf[:, None], true_count, expression_mask)
+            offset = stop
+
+    metrics.update({f"rate_{k}": v for k, v in rate_acc.summarize().items()})
+    metrics.update({f"count_no_sf_{k}": v for k, v in count_no_sf_acc.summarize().items()})
+    metrics.update({f"count_pred_sf_{k}": v for k, v in count_pred_sf_acc.summarize().items()})
+    metrics.update({f"count_oracle_sf_{k}": v for k, v in count_oracle_sf_acc.summarize().items()})
     for key, value in metrics.items():
         print(f"{key}: {value:.6f}")
     if out_json is not None:

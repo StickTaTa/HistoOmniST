@@ -1,0 +1,44 @@
+seed: 2026
+device: auto
+
+project:
+  name: hest1k_human_visium_expression_highconf_symbol95
+  description: "High-confidence HEST-1k H&E-to-ST expression-rate prediction for coverage>=95% canonical gene symbols."
+
+paths:
+  metadata_csv: data/HEST-1k/HEST_v1_3_0.csv
+  raw_root: data/HEST-1k/raw
+  processed_root: data/HEST-1k/processed
+  manifest: data/HEST-1k/manifests/human_visium_sf_manifest_highconf_context.csv
+  output_root: results/hest1k_human_visium_expression
+  checkpoint_root: checkpoints/hest1k_human_visium_expression
+
+data:
+  manifest: data/HEST-1k/manifests/human_visium_sf_manifest_highconf_context.csv
+  train_splits: ["train"]
+  val_splits: ["val"]
+  test_splits: ["test"]
+  gene_names_path: highconf_symbol_coverage95_genes.txt
+  gene_key: symbol
+  raw_st_root: data/HEST-1k/raw/st
+  normalize_features: train_standardize
+  min_total_counts: 1.0
+
+model:
+  name: gene_conditioned
+  latent_dim: 256
+  hidden_dims: [768, 384]
+  dropout: 0.15
+  output: log1p_rate
+
+training:
+  batch_size: 256
+  epochs: 50
+  lr: 0.0002
+  weight_decay: 0.0001
+  loss: masked_mse
+  patience: 6
+
+output:
+  dir: checkpoints/hest1k_human_visium_expression/highconf_symbol95_rate
+  save_predictions: true
