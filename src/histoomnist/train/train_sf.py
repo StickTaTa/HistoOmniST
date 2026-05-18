@@ -2,13 +2,14 @@
 
 import argparse
 import copy
+import os
 from pathlib import Path
 
 import numpy as np
 import torch
 from torch import nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, WeightedRandomSampler
 from tqdm import tqdm
 
 from histoomnist.data.dataset import SizeFactorDataset
@@ -78,6 +79,24 @@ def upper_tail_distribution_loss(
     return _weighted_mean((pred_top - target_top).pow(2), weights)
 
 
+def sorted_distribution_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    pred = pred.reshape(-1)
+    target = target.reshape(-1)
+    if pred.numel() < 2:
+        return pred.new_tensor(0.0)
+    return F.mse_loss(torch.sort(pred).values, torch.sort(target).values)
+
+
+def log_std_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    pred = pred.reshape(-1)
+    target = target.reshape(-1)
+    if pred.numel() < 2:
+        return pred.new_tensor(0.0)
+    pred_std = torch.std(pred, unbiased=False).clamp_min(1e-6)
+    target_std = torch.std(target, unbiased=False).clamp_min(1e-6)
+    return torch.log(pred_std / target_std).pow(2)
+
+
 class CompositeSFLoss(nn.Module):
     def __init__(self, cfg: dict):
         super().__init__()
@@ -98,6 +117,8 @@ class CompositeSFLoss(nn.Module):
         self.tail_distribution_weight = float(training_cfg.get("tail_distribution_weight", 0.0))
         self.tail_distribution_fraction = float(training_cfg.get("tail_distribution_fraction", 0.25))
         self.tail_distribution_top_weight = float(training_cfg.get("tail_distribution_top_weight", 3.0))
+        self.distribution_weight = float(training_cfg.get("distribution_weight", 0.0))
+        self.std_weight = float(training_cfg.get("std_weight", 0.0))
         self.sf_mse_weight = float(training_cfg.get("sf_mse_weight", 0.0))
         self.sf_tail_under_weight = float(training_cfg.get("sf_tail_under_weight", 0.0))
         self.tail_classification_weight = float(training_cfg.get("tail_classification_weight", 0.0))
@@ -134,6 +155,10 @@ class CompositeSFLoss(nn.Module):
                 top_fraction=self.tail_distribution_fraction,
                 top_weight=self.tail_distribution_top_weight,
             )
+        if self.distribution_weight:
+            loss = loss + self.distribution_weight * sorted_distribution_loss(pred, target)
+        if self.std_weight:
+            loss = loss + self.std_weight * log_std_loss(pred, target)
         if self.sf_mse_weight or self.sf_tail_under_weight:
             gate = self._tail_gate(target)
             pred_sf = torch.exp(pred.clamp(min=-8.0, max=4.0))
@@ -222,7 +247,8 @@ def run_epoch(model, loader, loss_fn, device, optimizer=None) -> tuple[float, np
     losses: list[float] = []
     preds: list[np.ndarray] = []
     trues: list[np.ndarray] = []
-    for batch in tqdm(loader, leave=False):
+    show_progress = os.environ.get("HISTOOMNIST_TQDM", "").strip() not in {"", "0", "false", "False"}
+    for batch in tqdm(loader, leave=False, disable=not show_progress):
         x = batch["features"].to(device)
         y = batch["log_sf"].to(device)
         with torch.set_grad_enabled(training):
@@ -236,6 +262,25 @@ def run_epoch(model, loader, loss_fn, device, optimizer=None) -> tuple[float, np
         preds.append(pred.detach().cpu().numpy())
         trues.append(y.detach().cpu().numpy())
     return float(np.mean(losses)), np.concatenate(preds, axis=0), np.concatenate(trues, axis=0)
+
+
+def build_train_loader(train_ds: SizeFactorDataset, cfg: dict) -> DataLoader:
+    training_cfg = cfg["training"]
+    sampler_name = str(training_cfg.get("sampler", "uniform"))
+    batch_size = int(training_cfg["batch_size"])
+    if sampler_name == "uniform":
+        return DataLoader(train_ds, batch_size=batch_size, shuffle=True, num_workers=0)
+    if sampler_name in {"slide_balanced", "sample_balanced"}:
+        sample_ids = np.asarray(train_ds.sample_ids).astype(str)
+        _, inverse, counts = np.unique(sample_ids, return_inverse=True, return_counts=True)
+        weights = 1.0 / counts[inverse].astype(np.float64)
+        sampler = WeightedRandomSampler(
+            weights=torch.as_tensor(weights, dtype=torch.double),
+            num_samples=int(training_cfg.get("samples_per_epoch", len(train_ds))),
+            replacement=True,
+        )
+        return DataLoader(train_ds, batch_size=batch_size, sampler=sampler, num_workers=0)
+    raise ValueError(f"Unsupported training sampler: {sampler_name}")
 
 
 def train(cfg: dict) -> Path:
@@ -271,6 +316,8 @@ def train(cfg: dict) -> Path:
             "sf_mse_weight",
             "sf_tail_under_weight",
             "tail_classification_weight",
+            "distribution_weight",
+            "std_weight",
         )
     )
     if uses_tail_loss and training_cfg.get("tail_threshold") is None:
@@ -286,12 +333,7 @@ def train(cfg: dict) -> Path:
         width=int(cfg["model"].get("width", 512)),
         depth=int(cfg["model"].get("depth", 4)),
     ).to(device)
-    train_loader = DataLoader(
-        train_ds,
-        batch_size=int(cfg["training"]["batch_size"]),
-        shuffle=True,
-        num_workers=0,
-    )
+    train_loader = build_train_loader(train_ds, cfg)
     val_loader = DataLoader(
         val_ds,
         batch_size=int(cfg["training"]["batch_size"]),
