@@ -210,6 +210,21 @@ def target_values_from_counts(counts: np.ndarray, size_factor: float, target_kin
     raise ValueError(f"Unsupported target_kind: {target_kind}")
 
 
+def target_matrix_from_counts(counts: np.ndarray, size_factor: np.ndarray, target_kind: TargetKind) -> np.ndarray:
+    values = np.asarray(counts, dtype=np.float32)
+    if target_kind == "count":
+        return values
+    if target_kind == "log1p_count":
+        return np.log1p(values).astype(np.float32, copy=False)
+    sf = np.asarray(size_factor, dtype=np.float32).reshape(-1, 1)
+    rate = values / np.clip(sf, 1.0e-6, None)
+    if target_kind == "rate":
+        return rate.astype(np.float32, copy=False)
+    if target_kind == "log1p_rate":
+        return np.log1p(rate).astype(np.float32, copy=False)
+    raise ValueError(f"Unsupported target_kind: {target_kind}")
+
+
 class HistogenePatchH5Dataset(Dataset):
     """HEST patch-H5 dataset with HisToGene-style items.
 
@@ -313,3 +328,87 @@ class HistogenePatchH5Dataset(Dataset):
         if slide.spatial_coords is not None:
             item["spatial_coords"] = torch.from_numpy(slide.spatial_coords[local_idx])
         return item
+
+
+class HistogenePatchH5ChunkDataset(Dataset):
+    """Fixed-size slide chunks for HisToGene-style transformer training."""
+
+    def __init__(
+        self,
+        expression_config: dict,
+        *,
+        splits: list[str],
+        chunk_size: int = 64,
+        max_slides: int | None = None,
+        max_chunks_per_slide: int | None = None,
+        target_kind: TargetKind = "log1p_rate",
+    ):
+        if int(chunk_size) <= 0:
+            raise ValueError("chunk_size must be positive.")
+        self.spot_dataset = HistogenePatchH5Dataset(
+            expression_config,
+            splits=splits,
+            max_slides=max_slides,
+            target_kind=target_kind,
+        )
+        self.slides = self.spot_dataset.slides
+        self.target_genes = self.spot_dataset.target_genes
+        self.target_kind = target_kind
+        self.chunk_size = int(chunk_size)
+        chunks: list[tuple[int, int, int]] = []
+        for slide_idx, slide in enumerate(self.slides):
+            slide_chunks = [
+                (slide_idx, start, min(start + self.chunk_size, slide.n_spots))
+                for start in range(0, slide.n_spots, self.chunk_size)
+            ]
+            if max_chunks_per_slide is not None:
+                slide_chunks = slide_chunks[: int(max_chunks_per_slide)]
+            chunks.extend(slide_chunks)
+        if not chunks:
+            raise ValueError("No chunks were created for HisToGene patch-H5 dataset.")
+        self.chunks = chunks
+
+    def __len__(self) -> int:
+        return len(self.chunks)
+
+    def slide_summary_frame(self) -> pd.DataFrame:
+        return self.spot_dataset.slide_summary_frame()
+
+    def __getitem__(self, index: int) -> dict[str, object]:
+        slide_idx, start, stop = self.chunks[index]
+        slide = self.slides[slide_idx]
+        length = int(stop - start)
+        patches = np.zeros((self.chunk_size, 3, 224, 224), dtype=np.float32)
+        positions = np.zeros((self.chunk_size, 2), dtype=np.float32)
+        targets = np.zeros((self.chunk_size, len(self.target_genes)), dtype=np.float32)
+        spot_mask = np.zeros(self.chunk_size, dtype=bool)
+        local_indices = np.arange(start, stop, dtype=np.int64)
+        padded_local_indices = np.full(self.chunk_size, -1, dtype=np.int64)
+        padded_local_indices[:length] = local_indices
+        with h5py.File(slide.patch_h5_path, "r") as handle:
+            img = handle["img"]
+            for out_idx, local_idx in enumerate(local_indices):
+                patch_index = int(slide.patch_indices[int(local_idx)])
+                patch = np.asarray(img[patch_index], dtype=np.float32)
+                if patch.ndim != 3 or patch.shape[-1] != 3:
+                    raise ValueError(f"Patch image must be HWC RGB, got {patch.shape} for {slide.sample_id}")
+                patches[out_idx] = np.transpose(patch / 255.0, (2, 0, 1))
+        counts = slide.counts[start:stop].toarray().astype(np.float32, copy=False)
+        targets[:length] = target_matrix_from_counts(
+            counts,
+            slide.size_factor[start:stop],
+            self.target_kind,
+        )
+        positions[:length] = slide.position_norm[start:stop]
+        spot_mask[:length] = True
+        return {
+            "patches": torch.from_numpy(patches),
+            "positions": torch.from_numpy(positions),
+            self.target_kind: torch.from_numpy(targets),
+            "spot_mask": torch.from_numpy(spot_mask),
+            "expression_mask": torch.from_numpy(slide.measured_genes),
+            "sample_id": slide.sample_id,
+            "start": int(start),
+            "stop": int(stop),
+            "local_indices": torch.from_numpy(padded_local_indices),
+        }
