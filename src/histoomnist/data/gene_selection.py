@@ -17,7 +17,7 @@ def normalize_gene_key(value: object) -> str | None:
 def load_gene_names(path: str | Path | None) -> list[str] | None:
     if path in (None, ""):
         return None
-    p = Path(path)
+    p = Path(path).resolve()
     if not p.exists():
         raise FileNotFoundError(f"Selected gene list not found: {p}")
     genes = []
@@ -31,7 +31,7 @@ def load_gene_names(path: str | Path | None) -> list[str] | None:
 def load_gene_indices(path: str | Path | None) -> np.ndarray | None:
     if path in (None, ""):
         return None
-    p = Path(path)
+    p = Path(path).resolve()
     if not p.exists():
         raise FileNotFoundError(f"Gene index file not found: {p}")
     if p.suffix == ".npy":
