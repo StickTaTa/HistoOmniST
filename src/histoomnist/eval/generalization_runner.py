@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import os
 import sys
@@ -26,6 +27,7 @@ from histoomnist.utils.project_paths import project_root, resolve_project_path
 DEFAULT_TASK_TABLE = "results/hest1k_human_visium_expression/generalization_readiness/generated_task_files.csv"
 DEFAULT_OUT_DIR = "results/hest1k_human_visium_expression/generalization_runs"
 DEFAULT_CHECKPOINT_ROOT = "checkpoints/hest1k_generalization_runs"
+MAX_TASK_DIR_NAME_LENGTH = 64
 
 
 class Tee:
@@ -80,6 +82,15 @@ def write_json(path: Path, data: dict[str, Any]) -> None:
 
 def run_name_default() -> str:
     return datetime.now().strftime("run_%Y%m%d_%H%M%S")
+
+
+def compact_task_dir_name(task_slug: str, max_length: int = MAX_TASK_DIR_NAME_LENGTH) -> str:
+    slug = str(task_slug)
+    if len(slug) <= max_length:
+        return slug
+    digest = hashlib.sha1(slug.encode("utf-8")).hexdigest()[:8]
+    prefix = slug[: max_length - len(digest) - 1].rstrip("_-")
+    return f"{prefix}_{digest}"
 
 
 def load_task_table(path: Path) -> pd.DataFrame:
@@ -353,8 +364,9 @@ def run_generalization_tasks(
     summary_path = run_dir / "summary.csv"
     for row in selected.itertuples(index=False):
         row_series = pd.Series(row._asdict())
-        task_dir = run_dir / str(row_series["split_type"]) / str(row_series["task_slug"])
-        checkpoint_dir = checkpoint_root / run_name / str(row_series["split_type"]) / str(row_series["task_slug"])
+        task_dir_name = compact_task_dir_name(str(row_series["task_slug"]))
+        task_dir = run_dir / str(row_series["split_type"]) / task_dir_name
+        checkpoint_dir = checkpoint_root / run_name / str(row_series["split_type"]) / task_dir_name
         for stage in stages:
             try:
                 if stage == "sf":
