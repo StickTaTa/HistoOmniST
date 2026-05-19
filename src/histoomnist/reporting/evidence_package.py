@@ -123,7 +123,7 @@ def build_benchmark_table(root: Path) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     histo_path = root / EXPR_ROOT / "benchmark_results" / "histoomnist_coverage95" / "summary.csv"
     stat_path = root / EXPR_ROOT / "statistical_baselines" / "summary.csv"
-    histogene_path = root / EXPR_ROOT / "benchmark_results" / "histogene_patch_h5_single_slide_smoke" / "run_summary.json"
+    benchmark_root = root / EXPR_ROOT / "benchmark_results"
 
     histo = read_csv_if_exists(histo_path)
     for _, row in histo.iterrows():
@@ -159,21 +159,43 @@ def build_benchmark_table(root: Path) -> pd.DataFrame:
             }
         )
 
-    if histogene_path.exists():
-        summary = read_json(histogene_path)
+    for summary_path in sorted(benchmark_root.glob("*/run_summary.json")):
+        run_name = summary_path.parent.name
+        if run_name == "histoomnist_coverage95":
+            continue
+        summary = read_json(summary_path)
+        if "gene_metrics" not in summary:
+            continue
         metrics = summary.get("gene_metrics", {})
+        n_slides = int(summary.get("n_slides", 0))
+        is_smoke = bool(summary.get("oracle_smoke_test", False)) or "smoke" in run_name.lower() or n_slides <= 1
+        if is_smoke:
+            family = "External baseline smoke"
+            evidence_level = "smoke_only"
+            scope = f"{n_slides} slide engineering smoke"
+            caveat = "Do not report as formal external benchmark performance."
+        elif n_slides >= 48:
+            family = "External baseline"
+            evidence_level = "formal_external_pilot"
+            scope = f"{n_slides} held-out test slides"
+            caveat = "Full test split with complete predictions; one training epoch and not a tuned SOTA external benchmark."
+        else:
+            family = "External baseline partial"
+            evidence_level = "partial_external"
+            scope = f"{n_slides} held-out test slides"
+            caveat = "Partial external benchmark; do not use as the final external comparison."
         rows.append(
             {
-                "family": "External baseline smoke",
-                "method": summary.get("method", "histogene_patch_h5"),
+                "family": family,
+                "method": run_name,
                 "prediction_kind": summary.get("prediction_kind", "log1p_rate"),
                 "mean_gene_pearson": float(metrics.get("mean_gene_pearson", float("nan"))),
                 "median_gene_pearson": float(metrics.get("median_gene_pearson", float("nan"))),
                 "valid_genes": int(metrics.get("valid_genes", 0)),
-                "scope": f"{int(summary.get('n_slides', 0))} slide engineering smoke",
-                "evidence_level": "smoke_only",
-                "caveat": "Do not report as formal external benchmark performance.",
-                "source_path": rel_project_path(histogene_path),
+                "scope": scope,
+                "evidence_level": evidence_level,
+                "caveat": caveat,
+                "source_path": rel_project_path(summary_path),
             }
         )
     return pd.DataFrame(rows)
@@ -453,7 +475,7 @@ def build_claim_table(
                 "claim": "HistoOmniST exceeds SF-only/statistical count baselines on the same coverage95 evaluator.",
                 "status": "supported",
                 "evidence": f"HistoOmniST count_pred_sf {count_pred:.4f} vs organ SF-only count_pred_sf {organ_sf:.4f}.",
-                "limitation": "External deep-learning baselines are not yet formally complete.",
+                "limitation": "External deep-learning method suite and tuning are not yet complete.",
                 "source_path": "results/hest1k_human_visium_expression/statistical_baselines/summary.csv",
             }
         )
@@ -510,27 +532,66 @@ def build_claim_table(
             if not formal_rows.empty
             else "no formal expression/count summary rows"
         )
+        formal_complete = (
+            not formal_rows.empty
+            and set(formal_rows["item"].astype(str))
+            == {
+                "formal_leave_organ_out_expression",
+                "formal_leave_organ_out_combined",
+                "formal_leave_cohort_out_expression",
+                "formal_leave_cohort_out_combined",
+            }
+            and formal_rows["status"].astype(str).eq("run").all()
+        )
+        if formal_complete:
+            claim = "Leave-organ-out and leave-cohort-out coverage95 generalization runs are complete for the ready task set."
+            status = "supported_ready_set"
+            limitation = "The ready set excludes tasks failing minimum test-slide or asset-readiness gates; inspect per-task metrics before broad generalization claims."
+        else:
+            claim = "Leave-slide-out, leave-organ-out, and leave-cohort-out task files are prepared for formal generalization runs."
+            status = "prepared_not_final"
+            limitation = f"Formal coverage95 expression/count generalization remains incomplete ({formal_status})."
         claims.append(
             {
-                "claim": "Leave-slide-out, leave-organ-out, and leave-cohort-out task files are prepared for formal generalization runs.",
-                "status": "prepared_not_final",
+                "claim": claim,
+                "status": status,
                 "evidence": (
                     f"{int(row['n_ready_tasks'])}/{int(row['n_tasks'])} tasks ready; "
-                    f"{int(row['n_generated_task_files'])} task-file sets generated."
+                    f"{int(row['n_generated_task_files'])} task-file sets generated; {formal_status}."
                 ),
-                "limitation": f"Formal coverage95 expression/count generalization remains incomplete ({formal_status}).",
+                "limitation": limitation,
                 "source_path": "results/hest1k_human_visium_expression/generalization_readiness/run_summary.json",
             }
         )
-    claims.append(
-        {
-            "claim": "External deep-learning benchmark performance can be claimed.",
-            "status": "not_supported_yet",
-            "evidence": "HisToGene patch-H5 path has adapter/training/complete single-slide smoke checks only.",
-            "limitation": "Do not compare external method performance in the manuscript until full-slide formal benchmark runs are complete.",
-            "source_path": "results/hest1k_human_visium_expression/benchmark_results/histogene_patch_h5_single_slide_smoke/run_summary.json",
-        }
+    external_formal = (
+        benchmark[benchmark["evidence_level"].astype(str).isin(["formal_external", "formal_external_pilot"])]
+        if not benchmark.empty and "evidence_level" in benchmark.columns
+        else pd.DataFrame()
     )
+    if not external_formal.empty:
+        best_external = external_formal.sort_values("mean_gene_pearson", ascending=False).iloc[0]
+        claims.append(
+            {
+                "claim": "A first full-split external deep-learning benchmark has been run.",
+                "status": "supported_pilot",
+                "evidence": (
+                    f"{best_external['method']} evaluated on {best_external['scope']}; "
+                    f"mean gene Pearson {float(best_external['mean_gene_pearson']):.4f}."
+                ),
+                "limitation": "Only the HisToGene patch-H5 adapter has full-split coverage so far, and this run used one training epoch rather than full tuning.",
+                "source_path": best_external["source_path"],
+            }
+        )
+    else:
+        claims.append(
+            {
+                "claim": "External deep-learning benchmark performance can be claimed.",
+                "status": "not_supported_yet",
+                "evidence": "HisToGene patch-H5 path has adapter/training/complete single-slide smoke checks only.",
+                "limitation": "Do not compare external method performance in the manuscript until full-slide formal benchmark runs are complete.",
+                "source_path": "results/hest1k_human_visium_expression/benchmark_results/histogene_patch_h5_single_slide_smoke/run_summary.json",
+            }
+        )
     return pd.DataFrame(claims)
 
 
