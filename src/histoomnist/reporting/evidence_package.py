@@ -119,6 +119,45 @@ def generalization_metric(group: pd.DataFrame, stage: str) -> tuple[str, str]:
     return label, f"{float(pd.Series(values).mean()):.4f}"
 
 
+def external_run_provenance(summary: dict[str, Any]) -> dict[str, Any]:
+    prediction_path = ""
+    train_path = ""
+    prediction_summary: dict[str, Any] = {}
+    train_summary: dict[str, Any] = {}
+    prediction_root = summary.get("prediction_root")
+    if prediction_root not in (None, ""):
+        candidate = Path(str(prediction_root)) / "prediction_summary.json"
+        if candidate.exists():
+            prediction_path = rel_project_path(candidate)
+            prediction_summary = read_json(candidate)
+    checkpoint = prediction_summary.get("checkpoint")
+    if checkpoint not in (None, ""):
+        candidate = Path(str(checkpoint)).parent / "train_summary.json"
+        if candidate.exists():
+            train_path = rel_project_path(candidate)
+            train_summary = read_json(candidate)
+
+    return {
+        "prediction_summary_path": prediction_path,
+        "train_summary_path": train_path,
+        "prediction_complete": prediction_summary.get("benchmark_evaluable_without_truncation", ""),
+        "n_train_slides": train_summary.get("n_train_slides", ""),
+        "n_val_slides": train_summary.get("n_val_slides", ""),
+        "n_train_chunks": train_summary.get("n_train_chunks", ""),
+        "n_val_chunks": train_summary.get("n_val_chunks", ""),
+        "train_epochs": train_summary.get("epochs", ""),
+    }
+
+
+def external_training_is_broad(provenance: dict[str, Any]) -> bool:
+    try:
+        n_train_slides = int(provenance.get("n_train_slides", 0))
+        n_train_chunks = int(provenance.get("n_train_chunks", 0))
+    except (TypeError, ValueError):
+        return False
+    return n_train_slides >= 100 and n_train_chunks >= 1000
+
+
 def build_benchmark_table(root: Path) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     histo_path = root / EXPR_ROOT / "benchmark_results" / "histoomnist_coverage95" / "summary.csv"
@@ -168,22 +207,42 @@ def build_benchmark_table(root: Path) -> pd.DataFrame:
             continue
         metrics = summary.get("gene_metrics", {})
         n_slides = int(summary.get("n_slides", 0))
+        provenance = external_run_provenance(summary)
+        prediction_complete = provenance.get("prediction_complete")
+        complete_text = (
+            "complete predictions"
+            if prediction_complete is True
+            else "prediction completeness unknown"
+            if prediction_complete == ""
+            else "incomplete/truncated predictions"
+        )
+        train_text = ""
+        if provenance.get("n_train_slides") not in ("", None):
+            train_text = (
+                f"; training used {int(provenance['n_train_slides'])} train slides/"
+                f"{int(provenance['n_train_chunks'])} chunks"
+            )
         is_smoke = bool(summary.get("oracle_smoke_test", False)) or "smoke" in run_name.lower() or n_slides <= 1
         if is_smoke:
             family = "External baseline smoke"
             evidence_level = "smoke_only"
             scope = f"{n_slides} slide engineering smoke"
             caveat = "Do not report as formal external benchmark performance."
-        elif n_slides >= 48:
+        elif n_slides >= 48 and external_training_is_broad(provenance):
             family = "External baseline"
             evidence_level = "formal_external_pilot"
             scope = f"{n_slides} held-out test slides"
-            caveat = "Full test split with complete predictions; one training epoch and not a tuned SOTA external benchmark."
+            caveat = f"Full test split with {complete_text}{train_text}; one epoch and not a tuned SOTA external benchmark."
+        elif n_slides >= 48:
+            family = "External baseline full-test limited-training"
+            evidence_level = "full_test_limited_external"
+            scope = f"{n_slides} held-out test slides"
+            caveat = f"Full test split with {complete_text}{train_text}; training is limited, so do not use as final external comparison."
         else:
             family = "External baseline partial"
             evidence_level = "partial_external"
             scope = f"{n_slides} held-out test slides"
-            caveat = "Partial external benchmark; do not use as the final external comparison."
+            caveat = f"Partial external benchmark with {complete_text}{train_text}; do not use as the final external comparison."
         rows.append(
             {
                 "family": family,
@@ -196,6 +255,7 @@ def build_benchmark_table(root: Path) -> pd.DataFrame:
                 "evidence_level": evidence_level,
                 "caveat": caveat,
                 "source_path": rel_project_path(summary_path),
+                **provenance,
             }
         )
     return pd.DataFrame(rows)
@@ -623,6 +683,19 @@ def build_claim_table(
     )
     if not external_formal.empty:
         best_external = external_formal.sort_values("mean_gene_pearson", ascending=False).iloc[0]
+        external_limited = (
+            benchmark[benchmark["evidence_level"].astype(str).eq("full_test_limited_external")]
+            if "evidence_level" in benchmark.columns
+            else pd.DataFrame()
+        )
+        if not external_limited.empty:
+            limited_methods = ", ".join(external_limited["method"].astype(str).tolist())
+            limitation = (
+                "Broad-training full-test external evidence is still limited to the formal pilot row; "
+                f"{limited_methods} has full test coverage but limited training, and no external method is tuned."
+            )
+        else:
+            limitation = "External method suite and tuning are not complete; this run used one epoch rather than full tuning."
         claims.append(
             {
                 "claim": "A first full-split external deep-learning benchmark has been run.",
@@ -631,7 +704,7 @@ def build_claim_table(
                     f"{best_external['method']} evaluated on {best_external['scope']}; "
                     f"mean gene Pearson {float(best_external['mean_gene_pearson']):.4f}."
                 ),
-                "limitation": "Only the HisToGene patch-H5 adapter has full-split coverage so far, and this run used one training epoch rather than full tuning.",
+                "limitation": limitation,
                 "source_path": best_external["source_path"],
             }
         )
@@ -707,6 +780,9 @@ def build_markdown_report(
                     "median_gene_pearson",
                     "valid_genes",
                     "evidence_level",
+                    "n_train_slides",
+                    "n_train_chunks",
+                    "prediction_complete",
                     "caveat",
                 ],
                 max_rows=20,
