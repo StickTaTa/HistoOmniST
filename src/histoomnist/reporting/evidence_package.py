@@ -445,12 +445,36 @@ def build_state_table(root: Path) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def build_spatial_signature_table(root: Path) -> pd.DataFrame:
+    spatial_root = root / EXPR_ROOT / "spatial_signature_fidelity"
+    summary_path = spatial_root / "spatial_signature_summary.csv"
+    overall_path = spatial_root / "spatial_signature_overall.csv"
+    run_path = spatial_root / "run_summary.json"
+    summary = read_csv_if_exists(summary_path)
+    if summary.empty:
+        return pd.DataFrame()
+    out = summary.copy().sort_values("mean_spatial_lag_pearson", ascending=False).reset_index(drop=True)
+    out["source_path"] = rel_project_path(summary_path)
+    overall = read_csv_if_exists(overall_path)
+    if not overall.empty:
+        overall_row = overall.iloc[0]
+        out["overall_mean_spatial_lag_pearson"] = float(overall_row.get("mean_spatial_lag_pearson", float("nan")))
+        out["overall_mean_hotspot_jaccard"] = float(overall_row.get("mean_hotspot_jaccard", float("nan")))
+    if run_path.exists():
+        run_summary = read_json(run_path)
+        out["score_kind"] = run_summary.get("score_kind", "")
+        out["k_neighbors"] = int(run_summary.get("k_neighbors", 0))
+        out["hotspot_fraction"] = float(run_summary.get("hotspot_fraction", float("nan")))
+    return out
+
+
 def build_claim_table(
     *,
     benchmark: pd.DataFrame,
     generalization: pd.DataFrame,
     biology: pd.DataFrame,
     states: pd.DataFrame,
+    spatial: pd.DataFrame,
     diagnostics_summary: dict[str, Any],
 ) -> pd.DataFrame:
     claims: list[dict[str, Any]] = []
@@ -521,6 +545,35 @@ def build_claim_table(
                 ),
                 "limitation": "States are derived from marker/signature scores, not independent pathology annotations or cell-type deconvolution.",
                 "source_path": "results/hest1k_human_visium_expression/biological_signature_states/state_fidelity_overall.csv",
+            }
+        )
+    if not spatial.empty:
+        best = spatial.sort_values("mean_spatial_lag_pearson", ascending=False).iloc[0]
+        n_pairs = int(pd.to_numeric(spatial["n_slide_signature_pairs"], errors="coerce").fillna(0).sum())
+        overall_lag = (
+            float(spatial["overall_mean_spatial_lag_pearson"].iloc[0])
+            if "overall_mean_spatial_lag_pearson" in spatial.columns
+            else float(spatial["mean_spatial_lag_pearson"].mean())
+        )
+        overall_hotspot = (
+            float(spatial["overall_mean_hotspot_jaccard"].iloc[0])
+            if "overall_mean_hotspot_jaccard" in spatial.columns
+            else float(spatial["mean_hotspot_jaccard"].mean())
+        )
+        overall_moran_delta = float(spatial["mean_abs_moran_delta"].mean())
+        claims.append(
+            {
+                "claim": "Predicted signature maps retain part of the measured spatial organization.",
+                "status": "supported_first_pass_spatial",
+                "evidence": (
+                    f"{len(spatial)} signatures over {n_pairs} slide-signature pairs; "
+                    f"overall mean spatial-lag Pearson {overall_lag:.3f}, mean hotspot Jaccard {overall_hotspot:.3f}; "
+                    f"mean absolute Moran's I delta {overall_moran_delta:.3f}; "
+                    f"best signature {best['signature']} has mean spatial-lag Pearson "
+                    f"{float(best['mean_spatial_lag_pearson']):.3f}."
+                ),
+                "limitation": "This kNN spatial-signature analysis is marker-derived and shows over-smoothing; it is not independent pathology-region validation.",
+                "source_path": "results/hest1k_human_visium_expression/spatial_signature_fidelity/spatial_signature_summary.csv",
             }
         )
     ready_row = generalization[generalization["item"].astype(str).eq("generalization_task_readiness")]
@@ -625,6 +678,7 @@ def build_markdown_report(
     generalization: pd.DataFrame,
     biology: pd.DataFrame,
     states: pd.DataFrame,
+    spatial: pd.DataFrame,
     claims: pd.DataFrame,
 ) -> Path:
     sections = [
@@ -699,13 +753,30 @@ def build_markdown_report(
             ),
         ),
         (
+            "Spatial Signature Fidelity",
+            markdown_table(
+                spatial,
+                [
+                    "signature",
+                    "n_slide_signature_pairs",
+                    "mean_spatial_lag_pearson",
+                    "median_spatial_lag_pearson",
+                    "mean_abs_moran_delta",
+                    "mean_hotspot_jaccard",
+                    "score_kind",
+                    "k_neighbors",
+                ],
+                max_rows=20,
+            ),
+        ),
+        (
             "Next Required Evidence",
             "\n".join(
                 [
-                    "1. Run full leave-organ-out and leave-cohort-out coverage95 expression/count evaluations.",
-                    "2. Run at least one full external baseline under the unified coverage95 benchmark harness.",
-                    "3. Extend biological fidelity from marker/signature states to pathway modules, cell-type deconvolution, and pathology-anchored validation.",
-                    "4. Generate final source-data tables for any manuscript figures after the formal runs complete.",
+                    "1. Expand external deep-learning baselines beyond the one-epoch HisToGene patch-H5 full-split pilot, with fixed preprocessing and tuned/reportable checkpoints.",
+                    "2. Extend biological validation from marker/signature and kNN spatial-signature fidelity to pathway modules, cell-type deconvolution, and pathology-anchored regions.",
+                    "3. Inspect per-task leave-organ-out and leave-cohort-out metrics before making broad cross-tissue or cross-cohort claims.",
+                    "4. Generate final source-data tables for manuscript figures after the formal comparison set is stable.",
                 ]
             ),
         ),
@@ -722,11 +793,13 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     generalization = build_generalization_table(root)
     biology = build_biology_table(root)
     states = build_state_table(root)
+    spatial = build_spatial_signature_table(root)
     claims = build_claim_table(
         benchmark=benchmark,
         generalization=generalization,
         biology=biology,
         states=states,
+        spatial=spatial,
         diagnostics_summary=diagnostics_summary,
     )
 
@@ -735,6 +808,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         "generalization_status": out_dir / "generalization_status.csv",
         "biological_signature_table": out_dir / "biological_signature_evidence_table.csv",
         "signature_state_table": out_dir / "signature_state_evidence_table.csv",
+        "spatial_signature_table": out_dir / "spatial_signature_evidence_table.csv",
         "claim_audit": out_dir / "claim_audit.csv",
         "report": out_dir / "histo_omnist_coverage95_evidence_report.md",
         "manifest": out_dir / "evidence_manifest.json",
@@ -743,6 +817,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     generalization.to_csv(outputs["generalization_status"], index=False)
     biology.to_csv(outputs["biological_signature_table"], index=False)
     states.to_csv(outputs["signature_state_table"], index=False)
+    spatial.to_csv(outputs["spatial_signature_table"], index=False)
     claims.to_csv(outputs["claim_audit"], index=False)
     build_markdown_report(
         out_path=outputs["report"],
@@ -750,6 +825,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         generalization=generalization,
         biology=biology,
         states=states,
+        spatial=spatial,
         claims=claims,
     )
     manifest = {
@@ -762,12 +838,14 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "generalization_runs": f"{EXPR_ROOT}/generalization_runs/*/summary.csv",
             "biological_signatures": f"{EXPR_ROOT}/biological_signatures/run_summary.json",
             "biological_signature_states": f"{EXPR_ROOT}/biological_signature_states/run_summary.json",
+            "spatial_signature_fidelity": f"{EXPR_ROOT}/spatial_signature_fidelity/run_summary.json",
         },
         "rows": {
             "benchmark_table": int(len(benchmark)),
             "generalization_status": int(len(generalization)),
             "biological_signature_table": int(len(biology)),
             "signature_state_table": int(len(states)),
+            "spatial_signature_table": int(len(spatial)),
             "claim_audit": int(len(claims)),
         },
         "claim_status_counts": claims["status"].value_counts().to_dict() if not claims.empty else {},
