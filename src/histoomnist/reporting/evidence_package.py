@@ -95,7 +95,7 @@ def is_smoke_generalization_run(manifest: dict[str, Any], run_name: str, stage: 
     return False
 
 
-def generalization_metric(group: pd.DataFrame, stage: str) -> tuple[str, str]:
+def generalization_metric_values(group: pd.DataFrame, stage: str) -> tuple[str, list[float]]:
     candidates = {
         "sf": [("metric_log_sf_pearson", "mean_log_sf_pearson"), ("metric_sf_pearson", "mean_sf_pearson")],
         "expression": [("metric_mean_gene_pearson", "mean_gene_pearson")],
@@ -108,8 +108,15 @@ def generalization_metric(group: pd.DataFrame, stage: str) -> tuple[str, str]:
         if column in group.columns:
             values = pd.to_numeric(group[column], errors="coerce").dropna()
             if not values.empty:
-                return label, f"{float(values.mean()):.4f}"
-    return "", ""
+                return label, [float(value) for value in values]
+    return "", []
+
+
+def generalization_metric(group: pd.DataFrame, stage: str) -> tuple[str, str]:
+    label, values = generalization_metric_values(group, stage)
+    if not values:
+        return "", ""
+    return label, f"{float(pd.Series(values).mean()):.4f}"
 
 
 def build_benchmark_table(root: Path) -> pd.DataFrame:
@@ -185,6 +192,10 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
         "expression": {"leave_organ_out": set(), "leave_cohort_out": set()},
         "combined": {"leave_organ_out": set(), "leave_cohort_out": set()},
     }
+    formal_metric_values_by_stage: dict[str, dict[str, list[float]]] = {
+        "expression": {"leave_organ_out": [], "leave_cohort_out": []},
+        "combined": {"leave_organ_out": [], "leave_cohort_out": []},
+    }
     if readiness_path.exists():
         readiness = read_json(readiness_path)
         rows.append(
@@ -244,12 +255,14 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
             else:
                 status = str(group["status"].iloc[0]) if len(group) else "error"
             smoke = is_smoke_generalization_run(manifest, run_name, stage)
+            metric, value = generalization_metric(group.loc[ok_mask] if ok_count else group, stage)
             if not smoke and stage in formal_completed_by_stage and "task_slug" in group.columns:
                 if split_type in formal_completed_by_stage[stage]:
                     formal_completed_by_stage[stage][split_type].update(group.loc[ok_mask, "task_slug"].astype(str))
                     if ok_count:
                         formal_sources_by_stage[stage][split_type].add(rel_project_path(summary_path))
-            metric, value = generalization_metric(group.loc[ok_mask] if ok_count else group, stage)
+                        _, task_values = generalization_metric_values(group.loc[ok_mask], stage)
+                        formal_metric_values_by_stage[stage][split_type].extend(task_values)
             if smoke:
                 caveat = "Smoke/short-run aggregate; checks task plumbing only and is not formal generalization performance."
             elif stage == "sf":
@@ -280,6 +293,16 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
         for stage, scope in formal_stage_scopes.items():
             completed = formal_completed_by_stage[stage].get(split_type, set())
             sources = formal_sources_by_stage[stage].get(split_type, set())
+            metric_values = formal_metric_values_by_stage[stage].get(split_type, [])
+            if metric_values:
+                metric = {
+                    "expression": "task_mean_gene_pearson",
+                    "combined": "task_mean_count_pred_sf_gene_pearson",
+                }[stage]
+                value = f"{float(pd.Series(metric_values).mean()):.4f}"
+            else:
+                metric = ""
+                value = ""
             if not ready:
                 status = "not_ready"
                 caveat = "No ready task set is available for this split type."
@@ -303,8 +326,8 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
                     "n_tasks": int(len(ready)),
                     "n_ready_tasks": int(len(completed)),
                     "n_generated_task_files": "",
-                    "metric": "",
-                    "value": "",
+                    "metric": metric,
+                    "value": value,
                     "caveat": caveat,
                     "source_path": "|".join(sorted(sources)),
                 }
