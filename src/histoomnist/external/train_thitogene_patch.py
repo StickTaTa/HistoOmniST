@@ -137,16 +137,26 @@ def run_epoch(
     device: torch.device,
     target_kind: str,
     optimizer: torch.optim.Optimizer | None = None,
+    stage: str,
 ) -> float:
     training = optimizer is not None
     model.train(training)
     losses: list[float] = []
+    reported_device = False
     for batch in loader:
         patches = batch["patches"].to(device)
         positions = batch["positions"].to(device)
         target = batch[target_kind].to(device)
         expression_mask = batch["expression_mask"].to(device)
         adj = batch["adj"].to(device)
+        if not reported_device:
+            model_device = next(model.parameters()).device
+            print(
+                f"[thitogene:{stage}] first_batch patches={patches.device} "
+                f"adj={adj.device} model={model_device}",
+                flush=True,
+            )
+            reported_device = True
         with torch.set_grad_enabled(training):
             pred = model(patches, positions, adj)
             loss = masked_mse(pred, target, expression_mask)
@@ -183,7 +193,14 @@ def train_thitogene_patch(
         raise ValueError("THItoGene patch adapter currently requires batch_size=1.")
     set_seed(int(seed))
     device = torch.device(get_device_name(device_name or expression_config.get("device")))
+    cuda_name = torch.cuda.get_device_name(device) if device.type == "cuda" else ""
+    print(
+        f"[thitogene] resolved_device={device}"
+        + (f" cuda_name={cuda_name}" if cuda_name else ""),
+        flush=True,
+    )
     n_pos = int(model_cfg.get("n_pos", 64))
+    print("[thitogene] building train dataset", flush=True)
     train_ds = THItoGenePatchH5ChunkDataset(
         expression_config,
         splits=train_splits,
@@ -194,6 +211,11 @@ def train_thitogene_patch(
         n_pos=n_pos,
         k_neighbors=k_neighbors,
     )
+    print(
+        f"[thitogene] train dataset slides={len(train_ds.slides)} chunks={len(train_ds)}",
+        flush=True,
+    )
+    print("[thitogene] building validation dataset", flush=True)
     val_ds = THItoGenePatchH5ChunkDataset(
         expression_config,
         splits=val_splits,
@@ -203,6 +225,10 @@ def train_thitogene_patch(
         target_kind=target_kind,
         n_pos=n_pos,
         k_neighbors=k_neighbors,
+    )
+    print(
+        f"[thitogene] validation dataset slides={len(val_ds.slides)} chunks={len(val_ds)}",
+        flush=True,
     )
     model = build_thitogene_model(model_cfg, n_genes=len(train_ds.target_genes)).to(device)
     train_loader = DataLoader(train_ds, batch_size=1, shuffle=True)
@@ -220,12 +246,14 @@ def train_thitogene_patch(
             device=device,
             target_kind=target_kind,
             optimizer=optimizer,
+            stage="train",
         )
         val_loss = run_epoch(
             model=model,
             loader=val_loader,
             device=device,
             target_kind=target_kind,
+            stage="val",
         )
         row = {"epoch": int(epoch), "train_loss": train_loss, "val_loss": val_loss}
         history.append(row)
