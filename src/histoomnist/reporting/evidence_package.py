@@ -145,6 +145,8 @@ def external_run_provenance(summary: dict[str, Any]) -> dict[str, Any]:
         "n_val_slides": train_summary.get("n_val_slides", ""),
         "n_train_chunks": train_summary.get("n_train_chunks", ""),
         "n_val_chunks": train_summary.get("n_val_chunks", ""),
+        "n_train_spots": train_summary.get("n_train_spots", ""),
+        "n_val_spots": train_summary.get("n_val_spots", ""),
         "train_epochs": train_summary.get("epochs", ""),
     }
 
@@ -152,10 +154,11 @@ def external_run_provenance(summary: dict[str, Any]) -> dict[str, Any]:
 def external_training_is_broad(provenance: dict[str, Any]) -> bool:
     try:
         n_train_slides = int(provenance.get("n_train_slides", 0))
-        n_train_chunks = int(provenance.get("n_train_chunks", 0))
+        n_train_chunks = int(provenance.get("n_train_chunks") or 0)
+        n_train_spots = int(provenance.get("n_train_spots") or 0)
     except (TypeError, ValueError):
         return False
-    return n_train_slides >= 100 and n_train_chunks >= 1000
+    return n_train_slides >= 100 and (n_train_chunks >= 1000 or n_train_spots >= 10000)
 
 
 def build_benchmark_table(root: Path) -> pd.DataFrame:
@@ -218,9 +221,16 @@ def build_benchmark_table(root: Path) -> pd.DataFrame:
         )
         train_text = ""
         if provenance.get("n_train_slides") not in ("", None):
+            train_unit = (
+                f"{int(provenance['n_train_chunks'])} chunks"
+                if provenance.get("n_train_chunks") not in ("", None)
+                else f"{int(provenance['n_train_spots'])} spots"
+                if provenance.get("n_train_spots") not in ("", None)
+                else "unknown training units"
+            )
             train_text = (
                 f"; training used {int(provenance['n_train_slides'])} train slides/"
-                f"{int(provenance['n_train_chunks'])} chunks"
+                f"{train_unit}"
             )
         is_smoke = bool(summary.get("oracle_smoke_test", False)) or "smoke" in run_name.lower() or n_slides <= 1
         if is_smoke:
@@ -949,6 +959,7 @@ def build_markdown_report(
                     "evidence_level",
                     "n_train_slides",
                     "n_train_chunks",
+                    "n_train_spots",
                     "prediction_complete",
                     "caveat",
                 ],
