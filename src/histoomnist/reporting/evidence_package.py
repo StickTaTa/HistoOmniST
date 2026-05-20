@@ -161,6 +161,16 @@ def external_training_is_broad(provenance: dict[str, Any]) -> bool:
     return n_train_slides >= 100 and (n_train_chunks >= 1000 or n_train_spots >= 10000)
 
 
+def external_training_epochs(provenance: dict[str, Any]) -> int | None:
+    value = provenance.get("train_epochs")
+    if value in ("", None):
+        return None
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return None
+
+
 def build_benchmark_table(root: Path) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     histo_path = root / EXPR_ROOT / "benchmark_results" / "histoomnist_coverage95" / "summary.csv"
@@ -232,17 +242,31 @@ def build_benchmark_table(root: Path) -> pd.DataFrame:
                 f"; training used {int(provenance['n_train_slides'])} train slides/"
                 f"{train_unit}"
             )
+        train_epochs = external_training_epochs(provenance)
+        epoch_text = (
+            f"{train_epochs}-epoch checkpoint"
+            if train_epochs is not None
+            else "training length unknown"
+        )
         is_smoke = bool(summary.get("oracle_smoke_test", False)) or "smoke" in run_name.lower() or n_slides <= 1
         if is_smoke:
             family = "External baseline smoke"
             evidence_level = "smoke_only"
             scope = f"{n_slides} slide engineering smoke"
             caveat = "Do not report as formal external benchmark performance."
+        elif n_slides >= 48 and external_training_is_broad(provenance) and (train_epochs or 0) >= 5:
+            family = "External baseline trained"
+            evidence_level = "formal_external_trained"
+            scope = f"{n_slides} held-out test slides"
+            caveat = (
+                f"Full test split with {complete_text}{train_text}; {epoch_text}, "
+                "but not a hyperparameter-tuned SOTA external benchmark."
+            )
         elif n_slides >= 48 and external_training_is_broad(provenance):
             family = "External baseline"
             evidence_level = "formal_external_pilot"
             scope = f"{n_slides} held-out test slides"
-            caveat = f"Full test split with {complete_text}{train_text}; one epoch and not a tuned SOTA external benchmark."
+            caveat = f"Full test split with {complete_text}{train_text}; {epoch_text} and not a tuned SOTA external benchmark."
         elif n_slides >= 48:
             family = "External baseline full-test limited-training"
             evidence_level = "full_test_limited_external"
@@ -890,13 +914,19 @@ def build_claim_table(
                 }
             )
     external_formal = (
-        benchmark[benchmark["evidence_level"].astype(str).isin(["formal_external", "formal_external_pilot"])]
+        benchmark[
+            benchmark["evidence_level"].astype(str).isin(
+                ["formal_external", "formal_external_pilot", "formal_external_trained"]
+            )
+        ]
         if not benchmark.empty and "evidence_level" in benchmark.columns
         else pd.DataFrame()
     )
     if not external_formal.empty:
         external_formal = external_formal.sort_values("mean_gene_pearson", ascending=False)
         best_external = external_formal.iloc[0]
+        trained_count = int(external_formal["evidence_level"].astype(str).eq("formal_external_trained").sum())
+        pilot_count = int(external_formal["evidence_level"].astype(str).eq("formal_external_pilot").sum())
         formal_methods = ", ".join(
             (
                 f"{row.method} ({float(row.mean_gene_pearson):.4f})"
@@ -911,17 +941,23 @@ def build_claim_table(
         if not external_limited.empty:
             limited_methods = ", ".join(external_limited["method"].astype(str).tolist())
             limitation = (
-                "Broad-training full-test external evidence is still limited to formal pilot rows; "
-                f"{limited_methods} have full test coverage but limited training, and no external method is tuned."
+                "External evidence includes trained/pilot rows but no method is yet hyperparameter-tuned; "
+                f"{limited_methods} have full test coverage but limited training."
             )
         else:
-            limitation = "External method suite and tuning are not complete; this run used one epoch rather than full tuning."
+            limitation = "External method suite and tuning are not complete; trained rows are not hyperparameter-tuned."
+        status = "supported_trained_pilot" if trained_count else "supported_pilot"
+        training_scope = (
+            f"{trained_count} trained row(s) and {pilot_count} one-epoch pilot row(s)"
+            if trained_count
+            else f"{len(external_formal)} formal pilot row(s)"
+        )
         claims.append(
             {
-                "claim": "Full-split external deep-learning benchmark pilot rows have been run.",
-                "status": "supported_pilot",
+                "claim": "Full-split external deep-learning benchmark rows have been run.",
+                "status": status,
                 "evidence": (
-                    f"{len(external_formal)} formal pilot row(s) evaluated on {best_external['scope']}; "
+                    f"{training_scope} evaluated on {best_external['scope']}; "
                     f"mean gene Pearson by method: {formal_methods}."
                 ),
                 "limitation": limitation,
@@ -1145,7 +1181,7 @@ def build_markdown_report(
             "Next Required Evidence",
             "\n".join(
                 [
-                    "1. Expand external deep-learning baselines beyond the one-epoch HisToGene patch-H5 full-split pilot, with fixed preprocessing and tuned/reportable checkpoints.",
+                    "1. Extend multi-epoch or tuned external deep-learning baselines beyond the current sCellST trained row; HisToGene and THItoGene still need comparable trained/reportable checkpoints.",
                     "2. Extend biological validation beyond marker/signature, pathway-module, kNN spatial-signature, marker-reference composition, and slide-level metadata stratification to scRNA-reference deconvolution and pathology-anchored regions.",
                     "3. Follow up weak leave-cohort and leave-organ heldouts identified by per-task inspection before making broad cross-tissue or cross-cohort claims.",
                     "4. Generate final source-data tables for manuscript figures after the formal comparison set is stable.",
