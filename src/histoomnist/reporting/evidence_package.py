@@ -682,7 +682,14 @@ def build_claim_table(
         else pd.DataFrame()
     )
     if not external_formal.empty:
-        best_external = external_formal.sort_values("mean_gene_pearson", ascending=False).iloc[0]
+        external_formal = external_formal.sort_values("mean_gene_pearson", ascending=False)
+        best_external = external_formal.iloc[0]
+        formal_methods = ", ".join(
+            (
+                f"{row.method} ({float(row.mean_gene_pearson):.4f})"
+                for row in external_formal.itertuples(index=False)
+            )
+        )
         external_limited = (
             benchmark[benchmark["evidence_level"].astype(str).eq("full_test_limited_external")]
             if "evidence_level" in benchmark.columns
@@ -691,21 +698,21 @@ def build_claim_table(
         if not external_limited.empty:
             limited_methods = ", ".join(external_limited["method"].astype(str).tolist())
             limitation = (
-                "Broad-training full-test external evidence is still limited to the formal pilot row; "
-                f"{limited_methods} has full test coverage but limited training, and no external method is tuned."
+                "Broad-training full-test external evidence is still limited to formal pilot rows; "
+                f"{limited_methods} have full test coverage but limited training, and no external method is tuned."
             )
         else:
             limitation = "External method suite and tuning are not complete; this run used one epoch rather than full tuning."
         claims.append(
             {
-                "claim": "A first full-split external deep-learning benchmark has been run.",
+                "claim": "Full-split external deep-learning benchmark pilot rows have been run.",
                 "status": "supported_pilot",
                 "evidence": (
-                    f"{best_external['method']} evaluated on {best_external['scope']}; "
-                    f"mean gene Pearson {float(best_external['mean_gene_pearson']):.4f}."
+                    f"{len(external_formal)} formal pilot row(s) evaluated on {best_external['scope']}; "
+                    f"mean gene Pearson by method: {formal_methods}."
                 ),
                 "limitation": limitation,
-                "source_path": best_external["source_path"],
+                "source_path": "|".join(external_formal["source_path"].astype(str).tolist()),
             }
         )
     else:
