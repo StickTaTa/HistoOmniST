@@ -1,0 +1,7 @@
+cell_type,signature,lineage
+epithelial_tumor,epithelial_tumor,epithelial
+t_cell,t_cell,immune
+b_cell,b_cell,immune
+myeloid,myeloid,immune
+stromal,stromal_ecm,stromal
+endothelial,endothelial,vascular

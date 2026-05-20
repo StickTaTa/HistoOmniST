@@ -475,6 +475,35 @@ def build_pathway_module_table(root: Path) -> pd.DataFrame:
     return out.reset_index(drop=True)
 
 
+def build_cell_type_composition_table(root: Path) -> pd.DataFrame:
+    composition_root = root / EXPR_ROOT / "cell_type_composition"
+    summary_path = composition_root / "cell_type_fraction_summary.csv"
+    overall_path = composition_root / "cell_type_composition_overall.csv"
+    run_path = composition_root / "run_summary.json"
+    summary = read_csv_if_exists(summary_path)
+    if summary.empty:
+        return pd.DataFrame()
+    out = summary.copy().sort_values("spot_fraction_pearson", ascending=False).reset_index(drop=True)
+    out["source_path"] = rel_project_path(summary_path)
+    overall = read_csv_if_exists(overall_path)
+    if not overall.empty:
+        row = overall.iloc[0]
+        out["overall_n_spots"] = int(row.get("n_spots", 0))
+        out["overall_mean_spot_fraction_pearson"] = float(row.get("mean_spot_fraction_pearson", float("nan")))
+        out["overall_mean_slide_fraction_pearson"] = float(row.get("mean_slide_fraction_pearson", float("nan")))
+        out["dominant_cell_type_accuracy"] = float(row.get("dominant_cell_type_accuracy", float("nan")))
+        out["dominant_cell_type_macro_f1"] = float(row.get("dominant_cell_type_macro_f1", float("nan")))
+        out["dominant_cell_type_adjusted_rand"] = float(
+            row.get("dominant_cell_type_adjusted_rand", float("nan"))
+        )
+        out["dominant_cell_type_nmi"] = float(row.get("dominant_cell_type_nmi", float("nan")))
+    if run_path.exists():
+        run_summary = read_json(run_path)
+        out["score_kind"] = run_summary.get("score_kind", "")
+        out["is_marker_reference_proxy"] = bool(run_summary.get("is_marker_reference_proxy", True))
+    return out
+
+
 def build_state_table(root: Path) -> pd.DataFrame:
     state_root = root / EXPR_ROOT / "biological_signature_states"
     summary_path = state_root / "run_summary.json"
@@ -570,6 +599,7 @@ def build_claim_table(
     generalization: pd.DataFrame,
     biology: pd.DataFrame,
     pathways: pd.DataFrame,
+    cell_types: pd.DataFrame,
     states: pd.DataFrame,
     spatial: pd.DataFrame,
     diagnostics_summary: dict[str, Any],
@@ -643,6 +673,28 @@ def build_claim_table(
                 ),
                 "limitation": "Pathway modules are gene-set score fidelity analyses, not formal enrichment, deconvolution, or pathology-region validation.",
                 "source_path": "results/hest1k_human_visium_expression/pathway_modules/signature_summary.csv",
+            }
+        )
+    if not cell_types.empty:
+        best = cell_types.iloc[0]
+        overall_spot = float(cell_types["overall_mean_spot_fraction_pearson"].iloc[0])
+        overall_slide = float(cell_types["overall_mean_slide_fraction_pearson"].iloc[0])
+        dominant_acc = float(cell_types["dominant_cell_type_accuracy"].iloc[0])
+        dominant_f1 = float(cell_types["dominant_cell_type_macro_f1"].iloc[0])
+        n_spots = int(cell_types["overall_n_spots"].iloc[0])
+        claims.append(
+            {
+                "claim": "Marker-reference cell-type composition signals are partially recovered from predicted expression.",
+                "status": "supported_first_pass_cell_composition",
+                "evidence": (
+                    f"{len(cell_types)} cell-type signatures over {n_spots} valid held-out spots; "
+                    f"mean spot-fraction Pearson {overall_spot:.3f}, mean slide-fraction Pearson {overall_slide:.3f}; "
+                    f"dominant cell-type accuracy {dominant_acc:.3f}, macro-F1 {dominant_f1:.3f}; "
+                    f"best cell type {best['cell_type']} spot-fraction Pearson "
+                    f"{float(best['spot_fraction_pearson']):.3f}."
+                ),
+                "limitation": "This is a marker-reference composition proxy, not scRNA reference deconvolution or pathology-annotated cell typing.",
+                "source_path": "results/hest1k_human_visium_expression/cell_type_composition/cell_type_fraction_summary.csv",
             }
         )
     state_overall = states[states["level"].astype(str).eq("overall")] if not states.empty else pd.DataFrame()
@@ -812,6 +864,7 @@ def build_markdown_report(
     generalization: pd.DataFrame,
     biology: pd.DataFrame,
     pathways: pd.DataFrame,
+    cell_types: pd.DataFrame,
     states: pd.DataFrame,
     spatial: pd.DataFrame,
     claims: pd.DataFrame,
@@ -889,6 +942,23 @@ def build_markdown_report(
             ),
         ),
         (
+            "Cell-Type Composition Fidelity",
+            markdown_table(
+                cell_types,
+                [
+                    "cell_type",
+                    "spot_fraction_pearson",
+                    "slide_fraction_pearson",
+                    "spot_fraction_mae",
+                    "slide_fraction_mae",
+                    "dominant_cell_type_accuracy",
+                    "score_kind",
+                    "is_marker_reference_proxy",
+                ],
+                max_rows=20,
+            ),
+        ),
+        (
             "Signature-Derived States",
             markdown_table(
                 states,
@@ -927,7 +997,7 @@ def build_markdown_report(
             "\n".join(
                 [
                     "1. Expand external deep-learning baselines beyond the one-epoch HisToGene patch-H5 full-split pilot, with fixed preprocessing and tuned/reportable checkpoints.",
-                    "2. Extend biological validation beyond marker/signature, pathway-module, and kNN spatial-signature fidelity to cell-type deconvolution and pathology-anchored regions.",
+                    "2. Extend biological validation beyond marker/signature, pathway-module, kNN spatial-signature, and marker-reference composition fidelity to scRNA-reference deconvolution and pathology-anchored regions.",
                     "3. Inspect per-task leave-organ-out and leave-cohort-out metrics before making broad cross-tissue or cross-cohort claims.",
                     "4. Generate final source-data tables for manuscript figures after the formal comparison set is stable.",
                 ]
@@ -946,6 +1016,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     generalization = build_generalization_table(root)
     biology = build_biology_table(root)
     pathways = build_pathway_module_table(root)
+    cell_types = build_cell_type_composition_table(root)
     states = build_state_table(root)
     spatial = build_spatial_signature_table(root)
     claims = build_claim_table(
@@ -953,6 +1024,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         generalization=generalization,
         biology=biology,
         pathways=pathways,
+        cell_types=cell_types,
         states=states,
         spatial=spatial,
         diagnostics_summary=diagnostics_summary,
@@ -963,6 +1035,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         "generalization_status": out_dir / "generalization_status.csv",
         "biological_signature_table": out_dir / "biological_signature_evidence_table.csv",
         "pathway_module_table": out_dir / "pathway_module_evidence_table.csv",
+        "cell_type_composition_table": out_dir / "cell_type_composition_evidence_table.csv",
         "signature_state_table": out_dir / "signature_state_evidence_table.csv",
         "spatial_signature_table": out_dir / "spatial_signature_evidence_table.csv",
         "claim_audit": out_dir / "claim_audit.csv",
@@ -973,6 +1046,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     generalization.to_csv(outputs["generalization_status"], index=False)
     biology.to_csv(outputs["biological_signature_table"], index=False)
     pathways.to_csv(outputs["pathway_module_table"], index=False)
+    cell_types.to_csv(outputs["cell_type_composition_table"], index=False)
     states.to_csv(outputs["signature_state_table"], index=False)
     spatial.to_csv(outputs["spatial_signature_table"], index=False)
     claims.to_csv(outputs["claim_audit"], index=False)
@@ -982,6 +1056,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         generalization=generalization,
         biology=biology,
         pathways=pathways,
+        cell_types=cell_types,
         states=states,
         spatial=spatial,
         claims=claims,
@@ -996,6 +1071,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "generalization_runs": f"{EXPR_ROOT}/generalization_runs/*/summary.csv",
             "biological_signatures": f"{EXPR_ROOT}/biological_signatures/run_summary.json",
             "pathway_modules": f"{EXPR_ROOT}/pathway_modules/run_summary.json",
+            "cell_type_composition": f"{EXPR_ROOT}/cell_type_composition/run_summary.json",
             "biological_signature_states": f"{EXPR_ROOT}/biological_signature_states/run_summary.json",
             "spatial_signature_fidelity": f"{EXPR_ROOT}/spatial_signature_fidelity/run_summary.json",
         },
@@ -1004,6 +1080,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "generalization_status": int(len(generalization)),
             "biological_signature_table": int(len(biology)),
             "pathway_module_table": int(len(pathways)),
+            "cell_type_composition_table": int(len(cell_types)),
             "signature_state_table": int(len(states)),
             "spatial_signature_table": int(len(spatial)),
             "claim_audit": int(len(claims)),
