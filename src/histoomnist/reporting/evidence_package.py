@@ -614,6 +614,27 @@ def build_spatial_signature_table(root: Path) -> pd.DataFrame:
     return out
 
 
+def build_metadata_stratification_table(root: Path) -> pd.DataFrame:
+    strat_root = root / EXPR_ROOT / "metadata_stratification"
+    summary_path = strat_root / "metadata_stratification_summary.csv"
+    run_path = strat_root / "run_summary.json"
+    summary = read_csv_if_exists(summary_path)
+    if summary.empty:
+        return pd.DataFrame()
+    out = summary.copy().sort_values("eta_pearson", ascending=False, na_position="last").reset_index(drop=True)
+    out["source_path"] = rel_project_path(summary_path)
+    if run_path.exists():
+        run_summary = read_json(run_path)
+        out["score_kind"] = run_summary.get("score_kind", "")
+        out["n_unique_slides"] = int(run_summary.get("n_unique_slides", 0))
+        out["n_total_signatures"] = int(run_summary.get("n_signatures", 0))
+        out["is_metadata_anchored"] = bool(run_summary.get("is_metadata_anchored", True))
+        out["has_spot_level_pathology_annotation"] = bool(
+            run_summary.get("has_spot_level_pathology_annotation", False)
+        )
+    return out
+
+
 def build_claim_table(
     *,
     benchmark: pd.DataFrame,
@@ -624,6 +645,7 @@ def build_claim_table(
     cell_types: pd.DataFrame,
     states: pd.DataFrame,
     spatial: pd.DataFrame,
+    metadata_stratification: pd.DataFrame,
     diagnostics_summary: dict[str, Any],
 ) -> pd.DataFrame:
     claims: list[dict[str, Any]] = []
@@ -762,6 +784,30 @@ def build_claim_table(
                 ),
                 "limitation": "This kNN spatial-signature analysis is marker-derived and shows over-smoothing; it is not independent pathology-region validation.",
                 "source_path": "results/hest1k_human_visium_expression/spatial_signature_fidelity/spatial_signature_summary.csv",
+            }
+        )
+    if not metadata_stratification.empty:
+        best = metadata_stratification.iloc[0]
+        n_fields = int(len(metadata_stratification))
+        n_slides = int(best.get("n_unique_slides", best.get("n_slides", 0)))
+        n_signatures = int(best.get("n_total_signatures", best.get("n_signatures", 0)))
+        contrast = (
+            f"; pairwise contrast Pearson {float(best['contrast_pearson']):.3f}"
+            if "contrast_pearson" in best and pd.notna(best["contrast_pearson"])
+            else ""
+        )
+        claims.append(
+            {
+                "claim": "Predicted slide-level signature profiles preserve part of metadata-anchored biological stratification.",
+                "status": "supported_first_pass_metadata",
+                "evidence": (
+                    f"{n_fields} HEST metadata label field(s) evaluated over {n_slides} held-out slides and "
+                    f"{n_signatures} signatures; best field {best['label_field']} has eta-squared Pearson "
+                    f"{float(best['eta_pearson']):.3f}{contrast}; top-group match rate "
+                    f"{float(best['top_group_match_rate']):.3f}."
+                ),
+                "limitation": "This uses independent slide-level HEST metadata labels, not spot-level pathology-region annotations or scRNA-reference deconvolution.",
+                "source_path": "results/hest1k_human_visium_expression/metadata_stratification/metadata_stratification_summary.csv",
             }
         )
     ready_row = generalization[generalization["item"].astype(str).eq("generalization_task_readiness")]
@@ -929,6 +975,7 @@ def build_markdown_report(
     cell_types: pd.DataFrame,
     states: pd.DataFrame,
     spatial: pd.DataFrame,
+    metadata_stratification: pd.DataFrame,
     claims: pd.DataFrame,
 ) -> Path:
     sections = [
@@ -1076,11 +1123,30 @@ def build_markdown_report(
             ),
         ),
         (
+            "Metadata-Anchored Stratification",
+            markdown_table(
+                metadata_stratification,
+                [
+                    "label_field",
+                    "n_signatures",
+                    "n_unique_slides",
+                    "n_groups",
+                    "eta_pearson",
+                    "contrast_pearson",
+                    "top_group_match_rate",
+                    "top_signature_eta_jaccard",
+                    "score_kind",
+                    "has_spot_level_pathology_annotation",
+                ],
+                max_rows=12,
+            ),
+        ),
+        (
             "Next Required Evidence",
             "\n".join(
                 [
                     "1. Expand external deep-learning baselines beyond the one-epoch HisToGene patch-H5 full-split pilot, with fixed preprocessing and tuned/reportable checkpoints.",
-                    "2. Extend biological validation beyond marker/signature, pathway-module, kNN spatial-signature, and marker-reference composition fidelity to scRNA-reference deconvolution and pathology-anchored regions.",
+                    "2. Extend biological validation beyond marker/signature, pathway-module, kNN spatial-signature, marker-reference composition, and slide-level metadata stratification to scRNA-reference deconvolution and pathology-anchored regions.",
                     "3. Follow up weak leave-cohort and leave-organ heldouts identified by per-task inspection before making broad cross-tissue or cross-cohort claims.",
                     "4. Generate final source-data tables for manuscript figures after the formal comparison set is stable.",
                 ]
@@ -1103,6 +1169,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     cell_types = build_cell_type_composition_table(root)
     states = build_state_table(root)
     spatial = build_spatial_signature_table(root)
+    metadata_stratification = build_metadata_stratification_table(root)
     claims = build_claim_table(
         benchmark=benchmark,
         generalization=generalization,
@@ -1112,6 +1179,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         cell_types=cell_types,
         states=states,
         spatial=spatial,
+        metadata_stratification=metadata_stratification,
         diagnostics_summary=diagnostics_summary,
     )
 
@@ -1124,6 +1192,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         "cell_type_composition_table": out_dir / "cell_type_composition_evidence_table.csv",
         "signature_state_table": out_dir / "signature_state_evidence_table.csv",
         "spatial_signature_table": out_dir / "spatial_signature_evidence_table.csv",
+        "metadata_stratification_table": out_dir / "metadata_stratification_evidence_table.csv",
         "claim_audit": out_dir / "claim_audit.csv",
         "report": out_dir / "histo_omnist_coverage95_evidence_report.md",
         "manifest": out_dir / "evidence_manifest.json",
@@ -1136,6 +1205,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     cell_types.to_csv(outputs["cell_type_composition_table"], index=False)
     states.to_csv(outputs["signature_state_table"], index=False)
     spatial.to_csv(outputs["spatial_signature_table"], index=False)
+    metadata_stratification.to_csv(outputs["metadata_stratification_table"], index=False)
     claims.to_csv(outputs["claim_audit"], index=False)
     build_markdown_report(
         out_path=outputs["report"],
@@ -1147,6 +1217,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         cell_types=cell_types,
         states=states,
         spatial=spatial,
+        metadata_stratification=metadata_stratification,
         claims=claims,
     )
     manifest = {
@@ -1163,6 +1234,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "cell_type_composition": f"{EXPR_ROOT}/cell_type_composition/run_summary.json",
             "biological_signature_states": f"{EXPR_ROOT}/biological_signature_states/run_summary.json",
             "spatial_signature_fidelity": f"{EXPR_ROOT}/spatial_signature_fidelity/run_summary.json",
+            "metadata_stratification": f"{EXPR_ROOT}/metadata_stratification/run_summary.json",
         },
         "rows": {
             "benchmark_table": int(len(benchmark)),
@@ -1173,6 +1245,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "cell_type_composition_table": int(len(cell_types)),
             "signature_state_table": int(len(states)),
             "spatial_signature_table": int(len(spatial)),
+            "metadata_stratification_table": int(len(metadata_stratification)),
             "claim_audit": int(len(claims)),
         },
         "claim_status_counts": claims["status"].value_counts().to_dict() if not claims.empty else {},
