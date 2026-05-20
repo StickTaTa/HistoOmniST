@@ -439,6 +439,42 @@ def build_biology_table(root: Path) -> pd.DataFrame:
     return out.reset_index(drop=True)
 
 
+def build_pathway_module_table(root: Path) -> pd.DataFrame:
+    summary_path = root / EXPR_ROOT / "pathway_modules" / "signature_summary.csv"
+    run_path = root / EXPR_ROOT / "pathway_modules" / "run_summary.json"
+    summary = read_csv_if_exists(summary_path)
+    if summary.empty:
+        return pd.DataFrame()
+    rate = summary[summary["metric_kind"].astype(str).eq("rate")][
+        ["signature", "rate_n_spots", "rate_pearson", "rate_mae", "n_present_genes", "missing_genes"]
+    ].rename(
+        columns={
+            "signature": "module",
+            "rate_n_spots": "n_spots",
+            "rate_pearson": "rate_module_pearson",
+            "rate_mae": "rate_mae",
+        }
+    )
+    count = summary[summary["metric_kind"].astype(str).eq("count_pred_sf")][
+        ["signature", "count_pred_sf_pearson", "count_pred_sf_mae"]
+    ].rename(
+        columns={
+            "signature": "module",
+            "count_pred_sf_pearson": "count_pred_sf_pearson",
+            "count_pred_sf_mae": "count_mae",
+        }
+    )
+    out = rate.merge(count, on="module", how="inner").sort_values("rate_module_pearson", ascending=False)
+    out["missing_genes"] = out["missing_genes"].fillna("")
+    out["source_path"] = rel_project_path(summary_path)
+    if run_path.exists():
+        run_summary = read_json(run_path)
+        out["n_spots_evaluated"] = int(run_summary.get("n_spots_evaluated", 0))
+        out["is_truncated"] = bool(run_summary.get("is_truncated", True))
+        out["min_module_genes"] = int(run_summary.get("min_signature_genes", 0))
+    return out.reset_index(drop=True)
+
+
 def build_state_table(root: Path) -> pd.DataFrame:
     state_root = root / EXPR_ROOT / "biological_signature_states"
     summary_path = state_root / "run_summary.json"
@@ -533,6 +569,7 @@ def build_claim_table(
     benchmark: pd.DataFrame,
     generalization: pd.DataFrame,
     biology: pd.DataFrame,
+    pathways: pd.DataFrame,
     states: pd.DataFrame,
     spatial: pd.DataFrame,
     diagnostics_summary: dict[str, Any],
@@ -589,6 +626,23 @@ def build_claim_table(
                 ),
                 "limitation": "This is marker/signature fidelity, not pathway enrichment, cell deconvolution, or clinical validation.",
                 "source_path": "results/hest1k_human_visium_expression/biological_signatures/signature_summary.csv",
+            }
+        )
+    if not pathways.empty:
+        best = pathways.iloc[0]
+        median_rate = float(pd.to_numeric(pathways["rate_module_pearson"], errors="coerce").median())
+        n_spots = int(best.get("n_spots_evaluated", best.get("n_spots", 0)))
+        claims.append(
+            {
+                "claim": "Predicted expression preserves pathway-module-level biological programs.",
+                "status": "supported_first_pass_pathway",
+                "evidence": (
+                    f"{len(pathways)} pathway modules evaluated over {n_spots} held-out spots; "
+                    f"best module {best['module']} has rate Pearson {float(best['rate_module_pearson']):.4f}; "
+                    f"median module Pearson {median_rate:.4f}."
+                ),
+                "limitation": "Pathway modules are gene-set score fidelity analyses, not formal enrichment, deconvolution, or pathology-region validation.",
+                "source_path": "results/hest1k_human_visium_expression/pathway_modules/signature_summary.csv",
             }
         )
     state_overall = states[states["level"].astype(str).eq("overall")] if not states.empty else pd.DataFrame()
@@ -757,6 +811,7 @@ def build_markdown_report(
     benchmark: pd.DataFrame,
     generalization: pd.DataFrame,
     biology: pd.DataFrame,
+    pathways: pd.DataFrame,
     states: pd.DataFrame,
     spatial: pd.DataFrame,
     claims: pd.DataFrame,
@@ -819,6 +874,21 @@ def build_markdown_report(
             ),
         ),
         (
+            "Pathway Module Fidelity",
+            markdown_table(
+                pathways,
+                [
+                    "module",
+                    "n_spots",
+                    "rate_module_pearson",
+                    "count_pred_sf_pearson",
+                    "n_present_genes",
+                    "missing_genes",
+                ],
+                max_rows=20,
+            ),
+        ),
+        (
             "Signature-Derived States",
             markdown_table(
                 states,
@@ -857,7 +927,7 @@ def build_markdown_report(
             "\n".join(
                 [
                     "1. Expand external deep-learning baselines beyond the one-epoch HisToGene patch-H5 full-split pilot, with fixed preprocessing and tuned/reportable checkpoints.",
-                    "2. Extend biological validation from marker/signature and kNN spatial-signature fidelity to pathway modules, cell-type deconvolution, and pathology-anchored regions.",
+                    "2. Extend biological validation beyond marker/signature, pathway-module, and kNN spatial-signature fidelity to cell-type deconvolution and pathology-anchored regions.",
                     "3. Inspect per-task leave-organ-out and leave-cohort-out metrics before making broad cross-tissue or cross-cohort claims.",
                     "4. Generate final source-data tables for manuscript figures after the formal comparison set is stable.",
                 ]
@@ -875,12 +945,14 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     benchmark = build_benchmark_table(root)
     generalization = build_generalization_table(root)
     biology = build_biology_table(root)
+    pathways = build_pathway_module_table(root)
     states = build_state_table(root)
     spatial = build_spatial_signature_table(root)
     claims = build_claim_table(
         benchmark=benchmark,
         generalization=generalization,
         biology=biology,
+        pathways=pathways,
         states=states,
         spatial=spatial,
         diagnostics_summary=diagnostics_summary,
@@ -890,6 +962,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         "benchmark_table": out_dir / "benchmark_evidence_table.csv",
         "generalization_status": out_dir / "generalization_status.csv",
         "biological_signature_table": out_dir / "biological_signature_evidence_table.csv",
+        "pathway_module_table": out_dir / "pathway_module_evidence_table.csv",
         "signature_state_table": out_dir / "signature_state_evidence_table.csv",
         "spatial_signature_table": out_dir / "spatial_signature_evidence_table.csv",
         "claim_audit": out_dir / "claim_audit.csv",
@@ -899,6 +972,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     benchmark.to_csv(outputs["benchmark_table"], index=False)
     generalization.to_csv(outputs["generalization_status"], index=False)
     biology.to_csv(outputs["biological_signature_table"], index=False)
+    pathways.to_csv(outputs["pathway_module_table"], index=False)
     states.to_csv(outputs["signature_state_table"], index=False)
     spatial.to_csv(outputs["spatial_signature_table"], index=False)
     claims.to_csv(outputs["claim_audit"], index=False)
@@ -907,6 +981,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         benchmark=benchmark,
         generalization=generalization,
         biology=biology,
+        pathways=pathways,
         states=states,
         spatial=spatial,
         claims=claims,
@@ -920,6 +995,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "generalization_readiness": f"{EXPR_ROOT}/generalization_readiness/run_summary.json",
             "generalization_runs": f"{EXPR_ROOT}/generalization_runs/*/summary.csv",
             "biological_signatures": f"{EXPR_ROOT}/biological_signatures/run_summary.json",
+            "pathway_modules": f"{EXPR_ROOT}/pathway_modules/run_summary.json",
             "biological_signature_states": f"{EXPR_ROOT}/biological_signature_states/run_summary.json",
             "spatial_signature_fidelity": f"{EXPR_ROOT}/spatial_signature_fidelity/run_summary.json",
         },
@@ -927,6 +1003,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "benchmark_table": int(len(benchmark)),
             "generalization_status": int(len(generalization)),
             "biological_signature_table": int(len(biology)),
+            "pathway_module_table": int(len(pathways)),
             "signature_state_table": int(len(states)),
             "spatial_signature_table": int(len(spatial)),
             "claim_audit": int(len(claims)),
