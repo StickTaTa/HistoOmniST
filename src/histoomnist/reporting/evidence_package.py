@@ -417,6 +417,17 @@ def build_generalization_table(root: Path) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def build_generalization_inspection_table(root: Path) -> pd.DataFrame:
+    inspection_root = root / EXPR_ROOT / "generalization_task_inspection"
+    summary_path = inspection_root / "generalization_task_summary.csv"
+    summary = read_csv_if_exists(summary_path)
+    if summary.empty:
+        return pd.DataFrame()
+    out = summary.copy().sort_values(["split_type", "stage"]).reset_index(drop=True)
+    out["source_path"] = rel_project_path(summary_path)
+    return out
+
+
 def build_biology_table(root: Path) -> pd.DataFrame:
     summary_path = root / EXPR_ROOT / "biological_signatures" / "signature_summary.csv"
     run_path = root / EXPR_ROOT / "biological_signatures" / "run_summary.json"
@@ -597,6 +608,7 @@ def build_claim_table(
     *,
     benchmark: pd.DataFrame,
     generalization: pd.DataFrame,
+    generalization_inspection: pd.DataFrame,
     biology: pd.DataFrame,
     pathways: pd.DataFrame,
     cell_types: pd.DataFrame,
@@ -765,7 +777,13 @@ def build_claim_table(
         if formal_complete:
             claim = "Leave-organ-out and leave-cohort-out coverage95 generalization runs are complete for the ready task set."
             status = "supported_ready_set"
-            limitation = "The ready set excludes tasks failing minimum test-slide or asset-readiness gates; inspect per-task metrics before broad generalization claims."
+            if not generalization_inspection.empty:
+                limitation = (
+                    "The ready set excludes tasks failing minimum test-slide or asset-readiness gates; "
+                    "per-task inspection is available and shows heterogeneous performance."
+                )
+            else:
+                limitation = "The ready set excludes tasks failing minimum test-slide or asset-readiness gates; inspect per-task metrics before broad generalization claims."
         else:
             claim = "Leave-slide-out, leave-organ-out, and leave-cohort-out task files are prepared for formal generalization runs."
             status = "prepared_not_final"
@@ -782,6 +800,39 @@ def build_claim_table(
                 "source_path": "results/hest1k_human_visium_expression/generalization_readiness/run_summary.json",
             }
         )
+    if not generalization_inspection.empty:
+        def inspection_row(split_type: str, stage: str) -> pd.Series | None:
+            rows = generalization_inspection[
+                generalization_inspection["split_type"].astype(str).eq(split_type)
+                & generalization_inspection["stage"].astype(str).eq(stage)
+            ]
+            if rows.empty:
+                return None
+            return rows.iloc[0]
+
+        cohort_expr = inspection_row("leave_cohort_out", "expression")
+        cohort_count = inspection_row("leave_cohort_out", "combined")
+        organ_expr = inspection_row("leave_organ_out", "expression")
+        organ_count = inspection_row("leave_organ_out", "combined")
+        if all(row is not None for row in [cohort_expr, cohort_count, organ_expr, organ_count]):
+            claims.append(
+                {
+                    "claim": "Ready-set leave-organ-out and leave-cohort-out performance has been inspected per task and is heterogeneous.",
+                    "status": "supported_inspected_heterogeneous",
+                    "evidence": (
+                        f"leave-organ expression/count means {float(organ_expr['mean_primary_metric']):.4f}/"
+                        f"{float(organ_count['mean_primary_metric']):.4f}, worst heldout "
+                        f"{organ_expr['worst_heldout']} ({float(organ_expr['worst_primary_metric']):.4f})/"
+                        f"{organ_count['worst_heldout']} ({float(organ_count['worst_primary_metric']):.4f}); "
+                        f"leave-cohort expression/count means {float(cohort_expr['mean_primary_metric']):.4f}/"
+                        f"{float(cohort_count['mean_primary_metric']):.4f}, low-task counts "
+                        f"{int(cohort_expr['n_low_metric_tasks'])}/{int(cohort_expr['n_tasks'])} and "
+                        f"{int(cohort_count['n_low_metric_tasks'])}/{int(cohort_count['n_tasks'])}."
+                    ),
+                    "limitation": "Supports bounded ready-set reporting; broad cross-tissue or cross-cohort claims need task-level caveats and follow-up on weak heldouts.",
+                    "source_path": "results/hest1k_human_visium_expression/generalization_task_inspection/generalization_task_summary.csv",
+                }
+            )
     external_formal = (
         benchmark[benchmark["evidence_level"].astype(str).isin(["formal_external", "formal_external_pilot"])]
         if not benchmark.empty and "evidence_level" in benchmark.columns
@@ -862,6 +913,7 @@ def build_markdown_report(
     out_path: Path,
     benchmark: pd.DataFrame,
     generalization: pd.DataFrame,
+    generalization_inspection: pd.DataFrame,
     biology: pd.DataFrame,
     pathways: pd.DataFrame,
     cell_types: pd.DataFrame,
@@ -909,6 +961,26 @@ def build_markdown_report(
                 generalization,
                 ["item", "status", "scope", "metric", "value", "caveat", "source_path"],
                 max_rows=24,
+            ),
+        ),
+        (
+            "Generalization Task Inspection",
+            markdown_table(
+                generalization_inspection,
+                [
+                    "split_type",
+                    "stage",
+                    "primary_metric_name",
+                    "n_tasks",
+                    "mean_primary_metric",
+                    "min_primary_metric",
+                    "n_low_metric_tasks",
+                    "worst_heldout",
+                    "worst_primary_metric",
+                    "best_heldout",
+                    "best_primary_metric",
+                ],
+                max_rows=12,
             ),
         ),
         (
@@ -998,7 +1070,7 @@ def build_markdown_report(
                 [
                     "1. Expand external deep-learning baselines beyond the one-epoch HisToGene patch-H5 full-split pilot, with fixed preprocessing and tuned/reportable checkpoints.",
                     "2. Extend biological validation beyond marker/signature, pathway-module, kNN spatial-signature, and marker-reference composition fidelity to scRNA-reference deconvolution and pathology-anchored regions.",
-                    "3. Inspect per-task leave-organ-out and leave-cohort-out metrics before making broad cross-tissue or cross-cohort claims.",
+                    "3. Follow up weak leave-cohort and leave-organ heldouts identified by per-task inspection before making broad cross-tissue or cross-cohort claims.",
                     "4. Generate final source-data tables for manuscript figures after the formal comparison set is stable.",
                 ]
             ),
@@ -1014,6 +1086,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     diagnostics_summary = read_json(diagnostics_path) if diagnostics_path.exists() else {}
     benchmark = build_benchmark_table(root)
     generalization = build_generalization_table(root)
+    generalization_inspection = build_generalization_inspection_table(root)
     biology = build_biology_table(root)
     pathways = build_pathway_module_table(root)
     cell_types = build_cell_type_composition_table(root)
@@ -1022,6 +1095,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     claims = build_claim_table(
         benchmark=benchmark,
         generalization=generalization,
+        generalization_inspection=generalization_inspection,
         biology=biology,
         pathways=pathways,
         cell_types=cell_types,
@@ -1033,6 +1107,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     outputs = {
         "benchmark_table": out_dir / "benchmark_evidence_table.csv",
         "generalization_status": out_dir / "generalization_status.csv",
+        "generalization_inspection_table": out_dir / "generalization_inspection_evidence_table.csv",
         "biological_signature_table": out_dir / "biological_signature_evidence_table.csv",
         "pathway_module_table": out_dir / "pathway_module_evidence_table.csv",
         "cell_type_composition_table": out_dir / "cell_type_composition_evidence_table.csv",
@@ -1044,6 +1119,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     }
     benchmark.to_csv(outputs["benchmark_table"], index=False)
     generalization.to_csv(outputs["generalization_status"], index=False)
+    generalization_inspection.to_csv(outputs["generalization_inspection_table"], index=False)
     biology.to_csv(outputs["biological_signature_table"], index=False)
     pathways.to_csv(outputs["pathway_module_table"], index=False)
     cell_types.to_csv(outputs["cell_type_composition_table"], index=False)
@@ -1054,6 +1130,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         out_path=outputs["report"],
         benchmark=benchmark,
         generalization=generalization,
+        generalization_inspection=generalization_inspection,
         biology=biology,
         pathways=pathways,
         cell_types=cell_types,
@@ -1069,6 +1146,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "statistical_baselines": f"{EXPR_ROOT}/statistical_baselines/summary.csv",
             "generalization_readiness": f"{EXPR_ROOT}/generalization_readiness/run_summary.json",
             "generalization_runs": f"{EXPR_ROOT}/generalization_runs/*/summary.csv",
+            "generalization_task_inspection": f"{EXPR_ROOT}/generalization_task_inspection/run_summary.json",
             "biological_signatures": f"{EXPR_ROOT}/biological_signatures/run_summary.json",
             "pathway_modules": f"{EXPR_ROOT}/pathway_modules/run_summary.json",
             "cell_type_composition": f"{EXPR_ROOT}/cell_type_composition/run_summary.json",
@@ -1078,6 +1156,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         "rows": {
             "benchmark_table": int(len(benchmark)),
             "generalization_status": int(len(generalization)),
+            "generalization_inspection_table": int(len(generalization_inspection)),
             "biological_signature_table": int(len(biology)),
             "pathway_module_table": int(len(pathways)),
             "cell_type_composition_table": int(len(cell_types)),
