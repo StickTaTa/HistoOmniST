@@ -11,6 +11,20 @@ The default panel is `configs/manuscript_release_28_gene_panel.json`. Use
 `--selected-genes GENE1 GENE2` to request another subset available in the
 16,942-gene expression checkpoint.
 
+Before inference, download the HistoOmniST checkpoints and the original HIPT
+assets:
+
+```bash
+python scripts/download_release_models.py
+python scripts/download_hipt_assets.py
+```
+
+The default HIPT paths are
+`third_party/HIPT/1-Hierarchical-Pretraining/` and
+`third_party/HIPT/HIPT_4K/Checkpoints/vit256_small_dino.pth`. Override them
+with `--hipt-source` and `--hipt-weights` only when the same official assets are
+stored elsewhere.
+
 ## Cohort input lists
 
 For batch inference, pass a newline-delimited text file or a CSV containing one
@@ -26,8 +40,6 @@ path
 python scripts/histoomnist_predict_uploaded_wsi.py \
   --input-list cohort_slides.csv \
   --out-dir outputs/cohort \
-  --hipt-source third_party/benchmarks/iStar \
-  --hipt-weights third_party/benchmarks/iStar/checkpoints/vit256_small_dino.pth \
   --skip-figures
 ```
 
@@ -69,3 +81,7 @@ run also writes combined predictions, slide summaries and `run_summary.json`.
 
 Predictions should not be interpreted as measured spatial transcriptomes or
 used for clinical diagnosis.
+
+For a visible, step-by-step walkthrough of these processing stages, use
+`notebooks/00_quickstart_inference.ipynb`. It runs the public 10x breast cancer
+H&E example without invoking the CLI as a black box.

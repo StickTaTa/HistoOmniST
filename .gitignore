@@ -36,6 +36,7 @@ data/HEST-1k/processed/*
 !data/HEST-1k/processed/.gitkeep
 data/TCGA/
 data/external*/
+data/examples/
 
 # Models and third-party assets
 checkpoints/

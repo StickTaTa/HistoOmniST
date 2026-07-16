@@ -4,6 +4,21 @@ HistoOmniST does not redistribute the complete third-party repositories,
 datasets, checkpoints or binary wheels used during benchmarking. Users must
 obtain them under their original terms.
 
+## Image feature dependency
+
+HistoOmniST uses the ViT-256 source and weight from the original HIPT project:
+
+| Dependency | Upstream source | Pinned revision |
+| --- | --- | --- |
+| HIPT | <https://github.com/mahmoodlab/HIPT> | `780fafaed2e5b112bc1ed6e78852af1fe6714342` |
+
+`scripts/download_hipt_assets.py` downloads only the required
+`vision_transformer.py` and `vit256_small_dino.pth` files from that project and
+verifies the checksums in `models/release_manifest.json`. HIPT is independent
+of the iStar benchmark adapter listed below.
+
+## External benchmark methods
+
 | Method | Upstream source | Pinned revision used for the manuscript audit |
 | --- | --- | --- |
 | HiST | <https://github.com/Yelab2020/HiST> | `504eab1c80af8d4fc1a9905ca79903bfdde5334c` |
@@ -16,6 +31,3 @@ obtain them under their original terms.
 | STimage | <https://github.com/BiomedicalMachineLearning/STimage> | `5a9696c3568a4f2728c96ed978bd60780eb437ec` |
 | ST-Net | <https://github.com/bryanhe/ST-Net> | `43022c1cb7de1540d5a74ea2338a12c82491c5ad` |
 | THItoGene | <https://github.com/yrjia1015/THItoGene> | `13daf4d9c2531a74937dfedeeb4cb905cf0bf6cb` |
-
-The HIPT ViT-256 model is obtained through the iStar/HIPT upstream ecosystem.
-Its expected SHA-256 is recorded in `models/release_manifest.json`.

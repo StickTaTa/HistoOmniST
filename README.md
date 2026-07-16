@@ -82,27 +82,41 @@ SHA-256 against [`models/release_manifest.json`](models/release_manifest.json).
 
 ### 3. Install the HIPT feature extractor
 
-HistoOmniST uses the HIPT ViT-256 implementation distributed with iStar. The
-third-party source and checkpoint remain under their upstream terms and are not
-redistributed in this repository.
+HistoOmniST uses the ViT-256 encoder from the original
+[`mahmoodlab/HIPT`](https://github.com/mahmoodlab/HIPT) project. HIPT is the
+image-feature dependency; iStar is a separate method included only in the
+external benchmark. The HIPT source and checkpoint remain under their upstream
+terms and are not redistributed in this repository.
 
 ```bash
-git clone https://github.com/daviddaiweizhang/istar.git third_party/benchmarks/iStar
-hf download JWonderLand/HIPT_unofficial vit256_small_dino.pth \
-  --local-dir third_party/benchmarks/iStar/checkpoints
+python scripts/download_hipt_assets.py
 ```
 
-See [Installation](docs/installation.md) for the expected HIPT checksum and
-CUDA setup notes.
+The downloader fetches the exact required source file and ViT-256 weight from
+the pinned HIPT revision, then verifies both against
+[`models/release_manifest.json`](models/release_manifest.json). See
+[Installation](docs/installation.md) for paths and checksums.
 
-### 4. Predict a virtual spatial transcriptome
+### 4. Run the real breast cancer tutorial
+
+```bash
+jupyter lab notebooks/00_quickstart_inference.ipynb
+```
+
+The notebook downloads the public 10x Genomics Xenium FFPE Human Breast Cancer
+Rep1 H&E image corresponding to the breast cancer Xenium section discussed in
+the manuscript and executes every inference stage as Python code. It displays
+the tissue mask and tile grid, extracts and caches HIPT features, predicts both
+branches, reconstructs `rate x SF`, and saves tile-level predictions and spatial
+maps. The 1.43 GB image is downloaded to the ignored
+`data/examples/breast_xenium/` directory and is never committed.
+
+### 5. Predict another virtual spatial transcriptome
 
 ```bash
 python scripts/histoomnist_predict_uploaded_wsi.py \
   --input /path/to/slide.svs \
   --out-dir outputs/example \
-  --hipt-source third_party/benchmarks/iStar \
-  --hipt-weights third_party/benchmarks/iStar/checkpoints/vit256_small_dino.pth \
   --write-report \
   --write-zip
 ```
@@ -115,8 +129,6 @@ inference, repeat `--input` or provide a text/CSV manifest:
 python scripts/histoomnist_predict_uploaded_wsi.py \
   --input-list cohort_slides.csv \
   --out-dir outputs/cohort \
-  --hipt-source third_party/benchmarks/iStar \
-  --hipt-weights third_party/benchmarks/iStar/checkpoints/vit256_small_dino.pth \
   --skip-figures
 ```
 
@@ -214,14 +226,16 @@ must not be reported as formal benchmark results.
 
 | Notebook | Purpose |
 | --- | --- |
-| [`00_quickstart_inference.ipynb`](notebooks/00_quickstart_inference.ipynb) | Download models and run one H&E image |
-| [`01_hest_data_preparation.ipynb`](notebooks/01_hest_data_preparation.ipynb) | Prepare HEST slide arrays and fixed splits |
-| [`02_train_rate_and_sf.ipynb`](notebooks/02_train_rate_and_sf.ipynb) | Train the two frozen model branches |
-| [`03_count_scale_evaluation.ipynb`](notebooks/03_count_scale_evaluation.ipynb) | Reconstruct and evaluate count-scale expression |
-| [`04_benchmark_workflow.ipynb`](notebooks/04_benchmark_workflow.ipynb) | Run and evaluate external-method adapters |
+| [`00_quickstart_inference.ipynb`](notebooks/00_quickstart_inference.ipynb) | Run the public 10x breast cancer H&E example end to end |
+| [`01_hest_data_preparation.ipynb`](notebooks/01_hest_data_preparation.ipynb) | Inspect HEST metadata, arrays, SF and fixed slide splits |
+| [`02_train_rate_and_sf.ipynb`](notebooks/02_train_rate_and_sf.ipynb) | Inspect and train both branches through Python APIs |
+| [`03_count_scale_evaluation.ipynb`](notebooks/03_count_scale_evaluation.ipynb) | Verify `rate x SF` and run the held-out HEST evaluation API |
+| [`04_benchmark_workflow.ipynb`](notebooks/04_benchmark_workflow.ipynb) | Validate and evaluate standardized external prediction bundles |
 
-The notebooks are compact guides. Full training and benchmarking should use the
-command-line entry points so that long-running jobs can be logged and resumed.
+The notebooks expose intermediate arrays and call project Python APIs directly;
+they are not wrappers around shell commands. Long-running full training and
+benchmark cells are guarded explicitly because they require the excluded HEST
+and third-party assets.
 
 ## Repository layout
 
@@ -231,6 +245,7 @@ data/HEST-1k/         public metadata, gene lists and slide-level split manifest
 docs/                 installation, inference, training and benchmark guides
 models/               release manifest and model-download documentation
 notebooks/            five public end-to-end tutorials
+examples/             manifests and instructions for public example data
 scripts/              preparation, training, evaluation and WSI entry points
 src/histoomnist/      installable HistoOmniST package
 tests/                release-contract and core workflow tests

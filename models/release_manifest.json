@@ -29,10 +29,25 @@
   "external_dependencies": [
     {
       "id": "hipt_vit256",
-      "filename": "vit256_small_dino.pth",
-      "sha256": "6960cd5a8657dc8bb214671aa0c6dbd3f5b698e84386884955836487ddc89e24",
       "redistributed": false,
-      "source": "https://github.com/daviddaiweizhang/istar"
+      "source": "https://github.com/mahmoodlab/HIPT",
+      "source_revision": "780fafaed2e5b112bc1ed6e78852af1fe6714342",
+      "source_file": {
+        "id": "hipt_vision_transformer_source",
+        "filename": "vision_transformer.py",
+        "target": "third_party/HIPT/1-Hierarchical-Pretraining/vision_transformer.py",
+        "url": "https://raw.githubusercontent.com/mahmoodlab/HIPT/780fafaed2e5b112bc1ed6e78852af1fe6714342/1-Hierarchical-Pretraining/vision_transformer.py",
+        "bytes": 12706,
+        "sha256": "3958a2b72d5bb7019e27b2ef6422429d484dd4225bcbaf86d803cc144ed9fd52"
+      },
+      "weights": {
+        "id": "hipt_vit256_weights",
+        "filename": "vit256_small_dino.pth",
+        "target": "third_party/HIPT/HIPT_4K/Checkpoints/vit256_small_dino.pth",
+        "url": "https://media.githubusercontent.com/media/mahmoodlab/HIPT/780fafaed2e5b112bc1ed6e78852af1fe6714342/HIPT_4K/Checkpoints/vit256_small_dino.pth",
+        "bytes": 704238867,
+        "sha256": "6960cd5a8657dc8bb214671aa0c6dbd3f5b698e84386884955836487ddc89e24"
+      }
     }
   ]
 }

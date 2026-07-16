@@ -39,8 +39,8 @@ from histoomnist.inference.count_scale import (  # noqa: E402
 DEFAULT_EXPRESSION_CHECKPOINT = ROOT / "checkpoints/hest1k_human_visium_expression/highconf_symbol95_rate/best.pt"
 DEFAULT_SF_CHECKPOINT = ROOT / "checkpoints/hest1k_human_visium_sf/context_distribution_light_hipt256_leave_slide_out/best.pt"
 DEFAULT_SF_CONFIG = ROOT / "configs/hest1k_human_visium_sf_context_distribution_light.yaml"
-DEFAULT_HIPT_SOURCE = ROOT / "third_party/benchmarks/iStar"
-DEFAULT_HIPT_WEIGHTS = ROOT / "third_party/benchmarks/iStar/checkpoints/vit256_small_dino.pth"
+DEFAULT_HIPT_SOURCE = ROOT / "third_party/HIPT/1-Hierarchical-Pretraining"
+DEFAULT_HIPT_WEIGHTS = ROOT / "third_party/HIPT/HIPT_4K/Checkpoints/vit256_small_dino.pth"
 DEFAULT_TARGET_CONFIG = ROOT / "configs" / "manuscript_release_28_gene_panel.json"
 
 DEFAULT_GENES = [

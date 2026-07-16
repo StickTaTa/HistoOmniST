@@ -1,0 +1,14 @@
+{
+  "id": "breast_xenium_rep1_he",
+  "title": "Xenium FFPE Human Breast Cancer Rep1 H&E image",
+  "provider": "10x Genomics",
+  "provider_page": "https://www.10xgenomics.com/datasets",
+  "license_note": "Download and use this dataset under the provider's terms.",
+  "asset": {
+    "filename": "Xenium_FFPE_Human_Breast_Cancer_Rep1_he_image.ome.tif",
+    "target": "data/examples/breast_xenium/Xenium_FFPE_Human_Breast_Cancer_Rep1_he_image.ome.tif",
+    "url": "https://cf.10xgenomics.com/samples/xenium/1.0.1/Xenium_FFPE_Human_Breast_Cancer_Rep1/Xenium_FFPE_Human_Breast_Cancer_Rep1_he_image.ome.tif",
+    "bytes": 1427110955,
+    "sha256": "3c2bd89588f97e886dc1288e68d4eaae1b21231cd59774bc01d2d7e3876430f0"
+  }
+}

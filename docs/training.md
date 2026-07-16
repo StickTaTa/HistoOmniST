@@ -18,6 +18,16 @@ This is a mean-one definition. Do not replace it with median normalization.
 Copy `configs/local_paths.example.yaml` to `configs/local_paths.yaml`. Absolute
 paths belong only in the ignored local file.
 
+Download the HIPT source and ViT-256 weight directly from the original HIPT
+project before extracting patch features:
+
+```bash
+python scripts/download_hipt_assets.py
+```
+
+The example local-path configuration already points to the resulting
+`third_party/HIPT/` layout.
+
 ```text
 data/HEST-1k/
   HEST_v1_3_0.csv

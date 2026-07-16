@@ -10,13 +10,20 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from histoomnist.utils.downloads import download_file, sha256_file, verify_file  # noqa: E402
+from histoomnist.utils.downloads import download_file  # noqa: E402
 
 
-DEFAULT_MANIFEST = ROOT / "models" / "release_manifest.json"
+DEFAULT_MANIFEST = ROOT / "examples" / "breast_xenium" / "example_manifest.json"
 
 
-def download_asset(asset: dict, *, root: Path, force: bool = False) -> Path:
+def download_example(
+    *,
+    manifest_path: Path = DEFAULT_MANIFEST,
+    root: Path = ROOT,
+    force: bool = False,
+) -> Path:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    asset = manifest["asset"]
     return download_file(
         url=asset["url"],
         destination=root / asset["target"],
@@ -28,7 +35,7 @@ def download_asset(asset: dict, *, root: Path, force: bool = False) -> Path:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Download and verify the frozen HistoOmniST release checkpoints."
+        description="Download the public 10x Xenium breast cancer H&E example."
     )
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument("--root", type=Path, default=ROOT)
@@ -39,11 +46,12 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     manifest_path = args.manifest if args.manifest.is_absolute() else ROOT / args.manifest
-    root = args.root.resolve()
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-    for asset in manifest["assets"]:
-        path = download_asset(asset, root=root, force=args.force)
-        print(f"verified {asset['id']}: {path}")
+    path = download_example(
+        manifest_path=manifest_path,
+        root=args.root.resolve(),
+        force=args.force,
+    )
+    print(f"verified breast_xenium_rep1_he: {path}")
 
 
 if __name__ == "__main__":
