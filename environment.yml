@@ -1,0 +1,9 @@
+name: histoomnist
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip>=24
+  - openslide
+  - pip:
+      - -e .[hest,wsi,analysis,notebooks,dev]

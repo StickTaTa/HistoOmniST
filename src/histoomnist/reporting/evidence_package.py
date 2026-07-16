@@ -25,6 +25,61 @@ def rel_project_path(path: str | Path | None) -> str:
         return str(p).replace("\\", "/")
 
 
+def path_exists(path: str | Path | None) -> bool:
+    if path in (None, ""):
+        return False
+    p = Path(str(path))
+    if not p.is_absolute():
+        p = project_root() / p
+    return p.exists()
+
+
+def resolve_existing_project_path(path: str | Path | None) -> Path | None:
+    """Resolve local paths, including summaries generated on the remote HPC copy."""
+    if path in (None, ""):
+        return None
+    root = project_root()
+    p = Path(str(path))
+    candidates: list[Path] = []
+    candidates.append(p if p.is_absolute() else root / p)
+    parts = p.parts
+    if "HistoOmniST" in parts:
+        idx = parts.index("HistoOmniST")
+        rel = Path(*parts[idx + 1 :])
+        candidates.append(root / rel)
+    text = str(path).replace("\\", "/")
+    marker = "/HistoOmniST/"
+    if marker in text:
+        candidates.append(root / text.split(marker, 1)[1])
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def resolve_existing_project_path_or_parent(path: str | Path | None) -> Path | None:
+    """Resolve a project path even when the file itself was intentionally not pulled back."""
+    if path in (None, ""):
+        return None
+    root = project_root()
+    p = Path(str(path))
+    candidates: list[Path] = []
+    candidates.append(p if p.is_absolute() else root / p)
+    parts = p.parts
+    if "HistoOmniST" in parts:
+        idx = parts.index("HistoOmniST")
+        rel = Path(*parts[idx + 1 :])
+        candidates.append(root / rel)
+    text = str(path).replace("\\", "/")
+    marker = "/HistoOmniST/"
+    if marker in text:
+        candidates.append(root / text.split(marker, 1)[1])
+    for candidate in candidates:
+        if candidate.exists() or candidate.parent.exists():
+            return candidate
+    return None
+
+
 def read_json(path: str | Path) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
@@ -126,21 +181,39 @@ def external_run_provenance(summary: dict[str, Any]) -> dict[str, Any]:
     train_summary: dict[str, Any] = {}
     prediction_root = summary.get("prediction_root")
     if prediction_root not in (None, ""):
-        candidate = Path(str(prediction_root)) / "prediction_summary.json"
+        resolved_root = resolve_existing_project_path(prediction_root)
+        candidate = (resolved_root if resolved_root is not None else Path(str(prediction_root))) / "prediction_summary.json"
         if candidate.exists():
             prediction_path = rel_project_path(candidate)
             prediction_summary = read_json(candidate)
     checkpoint = prediction_summary.get("checkpoint")
     if checkpoint not in (None, ""):
-        candidate = Path(str(checkpoint)).parent / "train_summary.json"
+        resolved_checkpoint = resolve_existing_project_path_or_parent(checkpoint)
+        candidate = (
+            resolved_checkpoint.parent
+            if resolved_checkpoint is not None
+            else Path(str(checkpoint)).parent
+        ) / "train_summary.json"
         if candidate.exists():
             train_path = rel_project_path(candidate)
             train_summary = read_json(candidate)
 
+    try:
+        n_summary_slides = int(summary.get("n_slides", 0) or 0)
+    except (TypeError, ValueError):
+        n_summary_slides = 0
+    try:
+        n_prediction_slides = int(prediction_summary.get("n_slides", 0) or 0)
+    except (TypeError, ValueError):
+        n_prediction_slides = 0
+    prediction_complete = prediction_summary.get("benchmark_evaluable_without_truncation", "")
+    if prediction_complete == "" and n_summary_slides >= 48 and n_prediction_slides >= 48:
+        prediction_complete = True
+
     return {
         "prediction_summary_path": prediction_path,
         "train_summary_path": train_path,
-        "prediction_complete": prediction_summary.get("benchmark_evaluable_without_truncation", ""),
+        "prediction_complete": prediction_complete,
         "n_train_slides": train_summary.get("n_train_slides", ""),
         "n_val_slides": train_summary.get("n_val_slides", ""),
         "n_train_chunks": train_summary.get("n_train_chunks", ""),
@@ -148,6 +221,9 @@ def external_run_provenance(summary: dict[str, Any]) -> dict[str, Any]:
         "n_train_spots": train_summary.get("n_train_spots", ""),
         "n_val_spots": train_summary.get("n_val_spots", ""),
         "train_epochs": train_summary.get("epochs", ""),
+        "best_epoch": train_summary.get("best_epoch", ""),
+        "early_stopping_patience": train_summary.get("early_stopping_patience", ""),
+        "stopped_early": train_summary.get("stopped_early", ""),
     }
 
 
@@ -158,7 +234,7 @@ def external_training_is_broad(provenance: dict[str, Any]) -> bool:
         n_train_spots = int(provenance.get("n_train_spots") or 0)
     except (TypeError, ValueError):
         return False
-    return n_train_slides >= 100 and (n_train_chunks >= 1000 or n_train_spots >= 10000)
+    return n_train_slides >= 100 and (n_train_chunks >= 1000 or n_train_spots >= 10000 or (n_train_chunks == 0 and n_train_spots == 0))
 
 
 def external_training_epochs(provenance: dict[str, Any]) -> int | None:
@@ -169,6 +245,10 @@ def external_training_epochs(provenance: dict[str, Any]) -> int | None:
         return int(float(value))
     except (TypeError, ValueError):
         return None
+
+
+def external_has_validation_training_protocol(provenance: dict[str, Any]) -> bool:
+    return provenance.get("best_epoch") not in ("", None)
 
 
 def build_benchmark_table(root: Path) -> pd.DataFrame:
@@ -218,6 +298,8 @@ def build_benchmark_table(root: Path) -> pd.DataFrame:
         summary = read_json(summary_path)
         if "gene_metrics" not in summary:
             continue
+        if summary.get("max_slide_spots") not in (None, ""):
+            continue
         metrics = summary.get("gene_metrics", {})
         n_slides = int(summary.get("n_slides", 0))
         provenance = external_run_provenance(summary)
@@ -248,19 +330,58 @@ def build_benchmark_table(root: Path) -> pd.DataFrame:
             if train_epochs is not None
             else "training length unknown"
         )
-        is_smoke = bool(summary.get("oracle_smoke_test", False)) or "smoke" in run_name.lower() or n_slides <= 1
+        has_validation_protocol = external_has_validation_training_protocol(provenance)
+        if has_validation_protocol:
+            patience = provenance.get("early_stopping_patience")
+            try:
+                best_epoch_text = str(int(float(provenance["best_epoch"])))
+            except (TypeError, ValueError):
+                best_epoch_text = "recorded"
+            if patience not in ("", None):
+                try:
+                    patience_text = str(int(float(patience)))
+                except (TypeError, ValueError):
+                    patience_text = str(patience)
+                epoch_text = (
+                    f"{train_epochs}-epoch run with validation-selected best epoch "
+                    f"{best_epoch_text} and patience {patience_text}"
+                )
+            else:
+                epoch_text = (
+                    f"{train_epochs}-epoch run with validation-selected best epoch "
+                    f"{best_epoch_text}"
+                )
+        lower_run_name = run_name.lower()
+        is_smoke = bool(summary.get("oracle_smoke_test", False)) or "smoke" in lower_run_name or n_slides <= 1
+        is_thumbnail_pilot = "thumbnail" in lower_run_name
         if is_smoke:
             family = "External baseline smoke"
             evidence_level = "smoke_only"
             scope = f"{n_slides} slide engineering smoke"
             caveat = "Do not report as formal external benchmark performance."
-        elif n_slides >= 48 and external_training_is_broad(provenance) and (train_epochs or 0) >= 5:
+        elif is_thumbnail_pilot:
+            family = "External baseline thumbnail pilot"
+            evidence_level = "thumbnail_pilot_only"
+            scope = f"{n_slides} held-out test slides"
+            caveat = (
+                f"Full test split with {complete_text}{train_text}; histology features are thumbnail-derived, "
+                "so keep this outside the formal full-resolution external benchmark table."
+            )
+        elif n_slides >= 48 and external_training_is_broad(provenance) and has_validation_protocol:
             family = "External baseline trained"
             evidence_level = "formal_external_trained"
             scope = f"{n_slides} held-out test slides"
             caveat = (
                 f"Full test split with {complete_text}{train_text}; {epoch_text}, "
                 "but not a hyperparameter-tuned SOTA external benchmark."
+            )
+        elif n_slides >= 48 and external_training_is_broad(provenance) and (train_epochs or 0) >= 2:
+            family = "External baseline multi-epoch pilot"
+            evidence_level = "formal_external_multi_epoch_pilot"
+            scope = f"{n_slides} held-out test slides"
+            caveat = (
+                f"Full test split with {complete_text}{train_text}; fixed {epoch_text} without an "
+                "early-stopping protocol, so do not treat as final trained external performance."
             )
         elif n_slides >= 48 and external_training_is_broad(provenance):
             family = "External baseline"
@@ -277,6 +398,15 @@ def build_benchmark_table(root: Path) -> pd.DataFrame:
             evidence_level = "partial_external"
             scope = f"{n_slides} held-out test slides"
             caveat = f"Partial external benchmark with {complete_text}{train_text}; do not use as the final external comparison."
+        if "stimage_sourcefaithful_featurecached" in lower_run_name:
+            if n_slides >= 48 and family == "External baseline trained":
+                evidence_level = "formal_external_trained_source_equivalent_featurecached"
+            caveat = (
+                caveat
+                + " STimage uses cached official ResNet50/GAP features and a vectorized equivalent of the official "
+                "per-gene Dense(2) negative-binomial heads; it is not the literal official Keras multi-output "
+                "`model.fit` coverage95 route."
+            )
         rows.append(
             {
                 "family": family,
@@ -659,6 +789,151 @@ def build_metadata_stratification_table(root: Path) -> pd.DataFrame:
     return out
 
 
+def build_organ_stratified_table(root: Path) -> pd.DataFrame:
+    organ_root = root / EXPR_ROOT / "organ_stratified_coverage95"
+    summary_path = organ_root / "organ_summary.csv"
+    map_manifest_path = organ_root / "organ_gene_spatial_map_manifest.csv"
+    summary = read_csv_if_exists(summary_path)
+    if summary.empty:
+        return pd.DataFrame()
+    out = summary.copy().sort_values("organ").reset_index(drop=True)
+    maps = read_csv_if_exists(map_manifest_path)
+    if not maps.empty and "organ" in maps.columns:
+        maps = maps.copy()
+        maps["written"] = bool_series(maps, "written", False)
+        map_counts = (
+            maps.groupby("organ", dropna=False)
+            .agg(
+                n_gene_spatial_maps=("gene", "count"),
+                n_written_gene_spatial_maps=("written", "sum"),
+            )
+            .reset_index()
+        )
+        out = out.merge(map_counts, on="organ", how="left")
+    if "n_gene_spatial_maps" not in out.columns:
+        out["n_gene_spatial_maps"] = 0
+    if "n_written_gene_spatial_maps" not in out.columns:
+        out["n_written_gene_spatial_maps"] = 0
+    out["n_gene_spatial_maps"] = pd.to_numeric(out["n_gene_spatial_maps"], errors="coerce").fillna(0).astype(int)
+    out["n_written_gene_spatial_maps"] = (
+        pd.to_numeric(out["n_written_gene_spatial_maps"], errors="coerce").fillna(0).astype(int)
+    )
+    out["source_path"] = rel_project_path(summary_path)
+    out["gene_map_manifest_path"] = rel_project_path(map_manifest_path) if map_manifest_path.exists() else ""
+    return out
+
+
+def _figure_rows_from_path_manifest(
+    *,
+    manifest_path: Path,
+    scope: str,
+    figure_type: str,
+    path_column: str = "path",
+    extra_columns: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    frame = read_csv_if_exists(manifest_path)
+    if frame.empty or path_column not in frame.columns:
+        return []
+    rows = []
+    written = bool_series(frame, "written", True)
+    extra_columns = extra_columns or []
+    for idx, row in frame.iterrows():
+        path_value = row.get(path_column, "")
+        rows.append(
+            {
+                "scope": scope,
+                "figure_type": figure_type,
+                "organ": row.get("organ", ""),
+                "sample_id": row.get("sample_id", ""),
+                "gene": row.get("gene", ""),
+                "signature": row.get("signature", row.get("program_signature", "")),
+                "program": row.get("program_signature", row.get("signature", "")),
+                "selection_reason": row.get("selection_reason", ""),
+                "metric": row.get("count_pred_sf_pearson", row.get("organ_count_pred_sf_pearson", row.get("pearson", ""))),
+                "path": rel_project_path(path_value),
+                "written": bool(written.loc[idx]),
+                "file_exists": path_exists(path_value),
+                "source_manifest": rel_project_path(manifest_path),
+                **{col: row.get(col, "") for col in extra_columns},
+            }
+        )
+    return rows
+
+
+def build_spatial_figure_index(root: Path) -> pd.DataFrame:
+    expr_root = root / EXPR_ROOT
+    rows: list[dict[str, Any]] = []
+
+    rows.extend(
+        _figure_rows_from_path_manifest(
+            manifest_path=expr_root / "organ_stratified_coverage95" / "organ_gene_spatial_map_manifest.csv",
+            scope="organ_stratified_coverage95",
+            figure_type="gene_level_measured_vs_predicted",
+        )
+    )
+    rows.extend(
+        _figure_rows_from_path_manifest(
+            manifest_path=expr_root / "organ_stratified_coverage95" / "spatial_overlay_manifest.csv",
+            scope="coverage95_overview",
+            figure_type="gene_level_measured_vs_predicted",
+        )
+    )
+    rows.extend(
+        _figure_rows_from_path_manifest(
+            manifest_path=expr_root / "biological_signatures" / "spatial_signature_map_manifest.csv",
+            scope="biological_signatures",
+            figure_type="signature_score_measured_vs_predicted",
+        )
+    )
+    rows.extend(
+        _figure_rows_from_path_manifest(
+            manifest_path=expr_root / "biological_signature_states" / "spatial_state_map_manifest.csv",
+            scope="signature_derived_states",
+            figure_type="signature_state_map",
+        )
+    )
+
+    app_root = expr_root / "multi_organ_applications"
+    if app_root.exists():
+        for manifest_path in sorted(app_root.glob("*/paired_gene_map_manifest.csv")):
+            rows.extend(
+                _figure_rows_from_path_manifest(
+                    manifest_path=manifest_path,
+                    scope=f"multi_organ_application:{manifest_path.parent.name}",
+                    figure_type="gene_level_measured_vs_predicted",
+                    extra_columns=["gene_class", "program_signature"],
+                )
+            )
+        for manifest_path in sorted(app_root.glob("*/program_map_manifest.csv")):
+            rows.extend(
+                _figure_rows_from_path_manifest(
+                    manifest_path=manifest_path,
+                    scope=f"multi_organ_application:{manifest_path.parent.name}",
+                    figure_type="program_score_measured_vs_predicted",
+                    extra_columns=["source", "paired_genes"],
+                )
+            )
+
+    benchmark_root = expr_root / "benchmark_results"
+    if benchmark_root.exists():
+        for manifest_path in sorted(benchmark_root.glob("*/spatial_gene_map_manifest.csv")):
+            rows.extend(
+                _figure_rows_from_path_manifest(
+                    manifest_path=manifest_path,
+                    scope=f"formal_external_benchmark:{manifest_path.parent.name}",
+                    figure_type="benchmark_gene_level_measured_vs_predicted",
+                    path_column="figure_path",
+                    extra_columns=["method_id", "method_label", "prediction_kind"],
+                )
+            )
+
+    if not rows:
+        return pd.DataFrame()
+    out = pd.DataFrame(rows)
+    sort_cols = [col for col in ["figure_type", "scope", "organ", "sample_id", "gene", "signature"] if col in out.columns]
+    return out.sort_values(sort_cols).reset_index(drop=True)
+
+
 def build_claim_table(
     *,
     benchmark: pd.DataFrame,
@@ -670,6 +945,7 @@ def build_claim_table(
     states: pd.DataFrame,
     spatial: pd.DataFrame,
     metadata_stratification: pd.DataFrame,
+    organ_stratified: pd.DataFrame,
     diagnostics_summary: dict[str, Any],
 ) -> pd.DataFrame:
     claims: list[dict[str, Any]] = []
@@ -686,6 +962,27 @@ def build_claim_table(
                 "evidence": f"count_pred_sf mean gene Pearson {count_pred:.4f} vs count_no_sf {count_no:.4f}; delta {delta:.4f}.",
                 "limitation": f"Oracle SF upper bound remains {count_oracle:.4f}." if count_oracle is not None else "",
                 "source_path": "results/hest1k_human_visium_expression/benchmark_results/histoomnist_coverage95/summary.csv",
+            }
+        )
+    if not organ_stratified.empty:
+        n_organs = int(len(organ_stratified))
+        n_maps = int(
+            pd.to_numeric(
+                organ_stratified.get("n_written_gene_spatial_maps", pd.Series(dtype=float)),
+                errors="coerce",
+            )
+            .fillna(0)
+            .sum()
+        )
+        priority = organ_stratified[organ_stratified["organ"].astype(str).isin(["Bowel", "Skin", "Brain", "Heart"])]
+        mapped_organs = int((pd.to_numeric(organ_stratified["n_written_gene_spatial_maps"], errors="coerce").fillna(0) > 0).sum())
+        claims.append(
+            {
+                "claim": "Coverage95 results include organ-stratified gene-level metrics and measured-versus-predicted gene spatial maps.",
+                "status": "supported",
+                "evidence": f"{n_organs} organ rows in organ_summary.csv; {n_maps} written gene spatial maps across {mapped_organs} organs, including {len(priority)} priority organs.",
+                "limitation": "Breast and Eye have one held-out slide each in this split and should be treated as case-study evidence.",
+                "source_path": "results/hest1k_human_visium_expression/organ_stratified_coverage95/organ_summary.csv",
             }
         )
     if count_pred is not None and organ_sf is not None:
@@ -916,7 +1213,12 @@ def build_claim_table(
     external_formal = (
         benchmark[
             benchmark["evidence_level"].astype(str).isin(
-                ["formal_external", "formal_external_pilot", "formal_external_trained"]
+                [
+                    "formal_external",
+                    "formal_external_pilot",
+                    "formal_external_multi_epoch_pilot",
+                    "formal_external_trained",
+                ]
             )
         ]
         if not benchmark.empty and "evidence_level" in benchmark.columns
@@ -926,6 +1228,9 @@ def build_claim_table(
         external_formal = external_formal.sort_values("mean_gene_pearson", ascending=False)
         best_external = external_formal.iloc[0]
         trained_count = int(external_formal["evidence_level"].astype(str).eq("formal_external_trained").sum())
+        multi_epoch_count = int(
+            external_formal["evidence_level"].astype(str).eq("formal_external_multi_epoch_pilot").sum()
+        )
         pilot_count = int(external_formal["evidence_level"].astype(str).eq("formal_external_pilot").sum())
         formal_methods = ", ".join(
             (
@@ -941,15 +1246,24 @@ def build_claim_table(
         if not external_limited.empty:
             limited_methods = ", ".join(external_limited["method"].astype(str).tolist())
             limitation = (
-                "External evidence includes trained/pilot rows but no method is yet hyperparameter-tuned; "
+                "External evidence includes trained/multi-epoch/pilot rows but no method is yet hyperparameter-tuned; "
                 f"{limited_methods} have full test coverage but limited training."
             )
         else:
             limitation = "External method suite and tuning are not complete; trained rows are not hyperparameter-tuned."
-        status = "supported_trained_pilot" if trained_count else "supported_pilot"
-        training_scope = (
-            f"{trained_count} trained row(s) and {pilot_count} one-epoch pilot row(s)"
+        status = (
+            "supported_trained_pilot"
             if trained_count
+            else "supported_multi_epoch_pilot"
+            if multi_epoch_count
+            else "supported_pilot"
+        )
+        training_scope = (
+            f"{trained_count} validation-trained row(s), {multi_epoch_count} fixed multi-epoch pilot row(s), "
+            f"and {pilot_count} one-epoch pilot row(s)"
+            if trained_count
+            else f"{multi_epoch_count} fixed multi-epoch pilot row(s) and {pilot_count} one-epoch pilot row(s)"
+            if multi_epoch_count
             else f"{len(external_formal)} formal pilot row(s)"
         )
         claims.append(
@@ -969,9 +1283,9 @@ def build_claim_table(
             {
                 "claim": "External deep-learning benchmark performance can be claimed.",
                 "status": "not_supported_yet",
-                "evidence": "HisToGene patch-H5 path has adapter/training/complete single-slide smoke checks only.",
-                "limitation": "Do not compare external method performance in the manuscript until full-slide formal benchmark runs are complete.",
-                "source_path": "results/hest1k_human_visium_expression/benchmark_results/histogene_patch_h5_single_slide_smoke/run_summary.json",
+                "evidence": "No source-faithful external deep-learning benchmark rows are currently available after removing adapter-derived benchmark artifacts.",
+                "limitation": "Do not compare external method performance in the manuscript until official-source or demonstrably source-faithful HEST-adapted benchmarks are complete.",
+                "source_path": "reports/histoomnist_cell_evidence_review/external_benchmark_source_audit_2026-05-20.md",
             }
         )
     return pd.DataFrame(claims)
@@ -1012,6 +1326,8 @@ def build_markdown_report(
     states: pd.DataFrame,
     spatial: pd.DataFrame,
     metadata_stratification: pd.DataFrame,
+    organ_stratified: pd.DataFrame,
+    spatial_figure_index: pd.DataFrame,
     claims: pd.DataFrame,
 ) -> Path:
     sections = [
@@ -1043,10 +1359,54 @@ def build_markdown_report(
                     "n_train_slides",
                     "n_train_chunks",
                     "n_train_spots",
+                    "best_epoch",
+                    "early_stopping_patience",
                     "prediction_complete",
                     "caveat",
                 ],
                 max_rows=20,
+            ),
+        ),
+        (
+            "Organ-Stratified Coverage95",
+            markdown_table(
+                organ_stratified,
+                [
+                    "organ",
+                    "n_slides",
+                    "n_spots",
+                    "count_no_sf_mean_gene_pearson",
+                    "count_pred_sf_mean_gene_pearson",
+                    "count_oracle_sf_mean_gene_pearson",
+                    "predicted_sf_gain_over_no_sf",
+                    "oracle_sf_gain_over_no_sf",
+                    "gain_capture_ratio",
+                    "n_written_gene_spatial_maps",
+                    "source_path",
+                    "gene_map_manifest_path",
+                ],
+                max_rows=12,
+            ),
+        ),
+        (
+            "Spatial Figure Index",
+            markdown_table(
+                spatial_figure_index,
+                [
+                    "scope",
+                    "figure_type",
+                    "organ",
+                    "sample_id",
+                    "gene",
+                    "signature",
+                    "program",
+                    "selection_reason",
+                    "metric",
+                    "path",
+                    "written",
+                    "file_exists",
+                ],
+                max_rows=60,
             ),
         ),
         (
@@ -1181,7 +1541,7 @@ def build_markdown_report(
             "Next Required Evidence",
             "\n".join(
                 [
-                    "1. Extend multi-epoch or tuned external deep-learning baselines beyond the current sCellST trained row; HisToGene and THItoGene still need comparable trained/reportable checkpoints.",
+                    "1. Keep replacing fixed-epoch or thumbnail-derived external deep-learning pilots with validation-selected or early-stopped reportable full-resolution checkpoints; HisToGene, THItoGene, and mclSTExp now have comparable source-faithful full-test rows, while remaining external methods still need the same standard.",
                     "2. Extend biological validation beyond marker/signature, pathway-module, kNN spatial-signature, marker-reference composition, and slide-level metadata stratification to scRNA-reference deconvolution and pathology-anchored regions.",
                     "3. Follow up weak leave-cohort and leave-organ heldouts identified by per-task inspection before making broad cross-tissue or cross-cohort claims.",
                     "4. Generate final source-data tables for manuscript figures after the formal comparison set is stable.",
@@ -1206,6 +1566,8 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     states = build_state_table(root)
     spatial = build_spatial_signature_table(root)
     metadata_stratification = build_metadata_stratification_table(root)
+    organ_stratified = build_organ_stratified_table(root)
+    spatial_figure_index = build_spatial_figure_index(root)
     claims = build_claim_table(
         benchmark=benchmark,
         generalization=generalization,
@@ -1216,6 +1578,7 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         states=states,
         spatial=spatial,
         metadata_stratification=metadata_stratification,
+        organ_stratified=organ_stratified,
         diagnostics_summary=diagnostics_summary,
     )
 
@@ -1229,6 +1592,8 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         "signature_state_table": out_dir / "signature_state_evidence_table.csv",
         "spatial_signature_table": out_dir / "spatial_signature_evidence_table.csv",
         "metadata_stratification_table": out_dir / "metadata_stratification_evidence_table.csv",
+        "organ_stratified_table": out_dir / "organ_stratified_coverage95_evidence_table.csv",
+        "spatial_figure_index": out_dir / "spatial_figure_index.csv",
         "claim_audit": out_dir / "claim_audit.csv",
         "report": out_dir / "histo_omnist_coverage95_evidence_report.md",
         "manifest": out_dir / "evidence_manifest.json",
@@ -1242,6 +1607,8 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
     states.to_csv(outputs["signature_state_table"], index=False)
     spatial.to_csv(outputs["spatial_signature_table"], index=False)
     metadata_stratification.to_csv(outputs["metadata_stratification_table"], index=False)
+    organ_stratified.to_csv(outputs["organ_stratified_table"], index=False)
+    spatial_figure_index.to_csv(outputs["spatial_figure_index"], index=False)
     claims.to_csv(outputs["claim_audit"], index=False)
     build_markdown_report(
         out_path=outputs["report"],
@@ -1254,6 +1621,8 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
         states=states,
         spatial=spatial,
         metadata_stratification=metadata_stratification,
+        organ_stratified=organ_stratified,
+        spatial_figure_index=spatial_figure_index,
         claims=claims,
     )
     manifest = {
@@ -1271,6 +1640,8 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "biological_signature_states": f"{EXPR_ROOT}/biological_signature_states/run_summary.json",
             "spatial_signature_fidelity": f"{EXPR_ROOT}/spatial_signature_fidelity/run_summary.json",
             "metadata_stratification": f"{EXPR_ROOT}/metadata_stratification/run_summary.json",
+            "organ_stratified_coverage95": f"{EXPR_ROOT}/organ_stratified_coverage95/run_summary.json",
+            "spatial_figure_manifests": f"{EXPR_ROOT}/**/*map_manifest.csv|{EXPR_ROOT}/**/*overlay_manifest.csv",
         },
         "rows": {
             "benchmark_table": int(len(benchmark)),
@@ -1282,6 +1653,8 @@ def build_evidence_package(out_dir: Path) -> dict[str, Any]:
             "signature_state_table": int(len(states)),
             "spatial_signature_table": int(len(spatial)),
             "metadata_stratification_table": int(len(metadata_stratification)),
+            "organ_stratified_table": int(len(organ_stratified)),
+            "spatial_figure_index": int(len(spatial_figure_index)),
             "claim_audit": int(len(claims)),
         },
         "claim_status_counts": claims["status"].value_counts().to_dict() if not claims.empty else {},

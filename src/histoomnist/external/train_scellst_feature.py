@@ -108,6 +108,8 @@ def train_scellst_feature(
     device_name: str | None = None,
     max_train_slides: int | None = None,
     max_val_slides: int | None = None,
+    patience: int | None = None,
+    min_delta: float = 0.0,
     seed: int = 2026,
 ) -> dict[str, Any]:
     set_seed(int(seed))
@@ -139,6 +141,9 @@ def train_scellst_feature(
     out_dir.mkdir(parents=True, exist_ok=True)
     best_path = out_dir / "best.pt"
     best_val = float("inf")
+    best_epoch = 0
+    stale_epochs = 0
+    stopped_early = False
     history = []
     for epoch in range(1, int(epochs) + 1):
         train_loss = run_epoch(model=model, loader=train_loader, device=device, optimizer=optimizer)
@@ -146,8 +151,11 @@ def train_scellst_feature(
         row = {"epoch": int(epoch), "train_loss": train_loss, "val_loss": val_loss}
         history.append(row)
         print(f"epoch={epoch:03d} train_loss={train_loss:.6f} val_loss={val_loss:.6f}", flush=True)
-        if val_loss < best_val:
+        improved = val_loss < (best_val - float(min_delta))
+        if improved:
             best_val = val_loss
+            best_epoch = int(epoch)
+            stale_epochs = 0
             save_checkpoint(
                 best_path,
                 checkpoint_payload(
@@ -170,13 +178,28 @@ def train_scellst_feature(
                     },
                 ),
             )
+        else:
+            stale_epochs += 1
+        if patience is not None and stale_epochs >= int(patience):
+            stopped_early = True
+            print(
+                f"early_stop epoch={epoch:03d} best_epoch={best_epoch:03d} "
+                f"best_val_loss={best_val:.6f} patience={int(patience)}",
+                flush=True,
+            )
+            break
     n_train_slides = int(len(np.unique(train_ds.sample_ids)))
     n_val_slides = int(len(np.unique(val_ds.sample_ids)))
     summary = {
         "checkpoint": str(best_path),
         "device": str(device),
         "target_kind": "log1p_rate",
-        "epochs": int(epochs),
+        "epochs": int(len(history)),
+        "max_epochs": int(epochs),
+        "best_epoch": int(best_epoch),
+        "early_stopping_patience": "" if patience is None else int(patience),
+        "early_stopping_min_delta": float(min_delta),
+        "stopped_early": bool(stopped_early),
         "batch_size": int(batch_size),
         "seed": int(seed),
         "train_splits": train_splits,

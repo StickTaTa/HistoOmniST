@@ -6,8 +6,13 @@ import sys
 from pathlib import Path
 
 import pandas as pd
-from huggingface_hub import HfApi, snapshot_download
-from huggingface_hub.hf_api import RepoFile
+try:
+    from huggingface_hub import HfApi, snapshot_download
+    from huggingface_hub.hf_api import RepoFile
+except ModuleNotFoundError:
+    HfApi = None
+    RepoFile = None
+    snapshot_download = None
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -39,6 +44,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--repo-id", default="MahmoodLab/hest")
     parser.add_argument("--revision", default="main")
     parser.add_argument("--raw-root", type=Path, default=None)
+    parser.add_argument("--species", default=None)
+    parser.add_argument("--st-technology", default=None)
+    parser.add_argument("--min-spots-under-tissue", type=int, default=None)
     parser.add_argument(
         "--asset",
         action="append",
@@ -47,6 +55,7 @@ def parse_args() -> argparse.Namespace:
         help="Asset group to download. Repeat to request multiple groups.",
     )
     parser.add_argument("--sample-id", action="append", default=None)
+    parser.add_argument("--sample-list", type=Path, default=None, help="Text file with one sample id per line.")
     parser.add_argument("--max-slides", type=int, default=None)
     parser.add_argument("--out-csv", type=Path, default=Path("data/HEST-1k/manifests/hest_download_plan.csv"))
     parser.add_argument("--download", action="store_true", help="Actually download files. Without this flag, only plans.")
@@ -54,6 +63,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--token", default=None, help="Hugging Face token. Prefer HF_TOKEN env var or hf auth login.")
     parser.add_argument("--token-file", type=Path, default=None, help="File containing a Hugging Face token.")
     return parser.parse_args()
+
+
+def requested_sample_ids(sample_ids: list[str] | None, sample_list: Path | None) -> list[str] | None:
+    ids = list(sample_ids or [])
+    if sample_list is not None:
+        path = resolve_project_path(sample_list)
+        ids.extend(
+            line.strip()
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        )
+    if not ids:
+        return None
+    return list(dict.fromkeys(ids))
 
 
 def resolve_token(args: argparse.Namespace) -> str | bool:
@@ -69,15 +92,26 @@ def resolve_token(args: argparse.Namespace) -> str | bool:
     return True
 
 
-def selected_metadata(config: dict, sample_ids: list[str] | None, max_slides: int | None) -> pd.DataFrame:
+def selected_metadata(
+    config: dict,
+    sample_ids: list[str] | None,
+    max_slides: int | None,
+    species: str | None,
+    st_technology: str | None,
+    min_spots_under_tissue: int | None,
+) -> pd.DataFrame:
     metadata_csv = resolve_project_path(config["paths"]["metadata_csv"])
     filters = config["filters"]
     df = load_hest_metadata(metadata_csv)
     filtered = filter_hest_metadata(
         df,
-        species=str(filters.get("species", "Homo sapiens")),
-        st_technology=str(filters.get("st_technology", "Visium")),
-        min_spots_under_tissue=int(filters.get("min_spots_under_tissue", 200)),
+        species=str(species or filters.get("species", "Homo sapiens")),
+        st_technology=str(st_technology or filters.get("st_technology", "Visium")),
+        min_spots_under_tissue=int(
+            filters.get("min_spots_under_tissue", 200)
+            if min_spots_under_tissue is None
+            else min_spots_under_tissue
+        ),
     )
     if sample_ids:
         wanted = set(sample_ids)
@@ -98,13 +132,15 @@ def planned_paths(sample_ids: list[str], assets: list[str]) -> list[str]:
     return paths
 
 
-def repo_file_sizes(repo_id: str, revision: str) -> dict[str, int]:
+def repo_file_sizes(repo_id: str, revision: str) -> tuple[dict[str, int], str]:
+    if HfApi is None or RepoFile is None:
+        return {}, "huggingface_hub_missing"
     sizes: dict[str, int] = {}
     api = HfApi()
     for item in api.list_repo_tree(repo_id=repo_id, repo_type="dataset", revision=revision, recursive=True):
         if isinstance(item, RepoFile):
             sizes[item.path] = int(item.size or 0)
-    return sizes
+    return sizes, "repo_checked"
 
 
 def format_gib(size_bytes: int) -> str:
@@ -116,16 +152,24 @@ def main() -> None:
     cfg = load_config(resolve_project_path(args.config))
     raw_root = resolve_project_path(args.raw_root or cfg["paths"]["raw_root"])
     assets = args.asset or ["metadata", "st", "patches"]
-    selected = selected_metadata(cfg, sample_ids=args.sample_id, max_slides=args.max_slides)
+    sample_ids_arg = requested_sample_ids(args.sample_id, args.sample_list)
+    selected = selected_metadata(
+        cfg,
+        sample_ids=sample_ids_arg,
+        max_slides=args.max_slides,
+        species=args.species,
+        st_technology=args.st_technology,
+        min_spots_under_tissue=args.min_spots_under_tissue,
+    )
     sample_ids = selected["id"].astype(str).tolist()
     paths = planned_paths(sample_ids, assets)
-    sizes = repo_file_sizes(args.repo_id, args.revision)
+    sizes, repo_check_status = repo_file_sizes(args.repo_id, args.revision)
 
     rows = []
     missing = []
     for path in paths:
-        exists = path in sizes
-        if not exists:
+        exists = path in sizes if repo_check_status == "repo_checked" else None
+        if exists is False:
             missing.append(path)
         rows.append(
             {
@@ -136,6 +180,7 @@ def main() -> None:
                 "sample_id": Path(path).stem.split("_downscaled_fullres")[0],
                 "size_bytes": sizes.get(path, 0),
                 "exists_in_repo": exists,
+                "repo_check_status": repo_check_status,
                 "local_path": str(raw_root / path),
                 "already_downloaded": (raw_root / path).exists(),
             }
@@ -145,13 +190,15 @@ def main() -> None:
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     plan.to_csv(out_csv, index=False)
 
-    present = plan[plan["exists_in_repo"]]
+    exists_mask = plan["exists_in_repo"].eq(True)
+    present = plan[exists_mask]
     total_size = int(present["size_bytes"].sum()) if not present.empty else 0
     already = int(present.loc[present["already_downloaded"], "size_bytes"].sum()) if not present.empty else 0
     remaining = total_size - already
     print(f"selected_slides={len(sample_ids)}")
     print(f"asset_groups={','.join(assets)}")
     print(f"planned_files={len(plan)}")
+    print(f"repo_check_status={repo_check_status}")
     print(f"missing_files={len(missing)}")
     print(f"total_size={format_gib(total_size)}")
     print(f"already_downloaded={format_gib(already)}")
@@ -165,6 +212,8 @@ def main() -> None:
         print("dry_run=true; pass --download to download files.")
         return
 
+    if snapshot_download is None:
+        raise RuntimeError("huggingface_hub is required for --download but is not installed.")
     token = resolve_token(args)
     raw_root.mkdir(parents=True, exist_ok=True)
     paths_to_download = plan.loc[~plan["already_downloaded"], "path"].tolist()

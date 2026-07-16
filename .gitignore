@@ -1,0 +1,71 @@
+# Python caches and build output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Environments and local configuration
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+configs/local_paths.yaml
+
+# Editors and local agent state
+.idea/
+.vscode/
+.worktrees/
+.codex_tmp/
+AGENTS.md
+codex_*conversations*
+.DS_Store
+Thumbs.db
+
+# Raw, processed and cohort data
+data/HEST-1k/raw/*
+!data/HEST-1k/raw/.gitkeep
+data/HEST-1k/processed/*
+!data/HEST-1k/processed/.gitkeep
+data/TCGA/
+data/external*/
+
+# Models and third-party assets
+checkpoints/
+third_party/
+release_assets/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.npy
+*.npz
+*.h5
+*.h5ad
+*.loom
+*.zarr/
+
+# Generated analyses and manuscript work products
+results/
+result/
+outputs/
+output/
+runs/
+logs/
+reports/
+analysis/
+figures/
+cleanup_manifests/
+research_path2space/
+tmp/
+*.log
+
+# Notebook state
+.ipynb_checkpoints/

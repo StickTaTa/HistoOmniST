@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass
@@ -96,6 +97,7 @@ GENE_CLASS_MARKERS = {
 
 @dataclass
 class DiagnosticsContext:
+    expression_config_path: Path
     expression_config: dict
     sf_config: dict
     expression_checkpoint: Path
@@ -106,6 +108,8 @@ class DiagnosticsContext:
     device: torch.device
     overlay_sample_id: str | None
     max_overlay_genes: int
+    overlay_organs: list[str]
+    overlay_genes_per_organ: int
 
 
 class VectorMetricAccumulator:
@@ -241,6 +245,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--device", default=None)
     parser.add_argument("--overlay-sample-id", default="MISC33")
     parser.add_argument("--max-overlay-genes", type=int, default=6)
+    parser.add_argument("--overlay-organs", nargs="*", default=["Bowel", "Skin", "Brain", "Heart"])
+    parser.add_argument("--overlay-genes-per-organ", type=int, default=6)
     parser.add_argument("--out-dir", type=Path, default=Path("results/hest1k_human_visium_expression/coverage95_diagnostics"))
     return parser.parse_args()
 
@@ -303,6 +309,7 @@ def load_context(args: argparse.Namespace) -> DiagnosticsContext:
     device_name = args.device or expression_config.get("device")
     device = torch.device(get_device_name(device_name))
     return DiagnosticsContext(
+        expression_config_path=expression_config_path,
         expression_config=expression_config,
         sf_config=sf_config,
         expression_checkpoint=expression_checkpoint,
@@ -313,6 +320,8 @@ def load_context(args: argparse.Namespace) -> DiagnosticsContext:
         device=device,
         overlay_sample_id=None if args.overlay_sample_id in (None, "") else str(args.overlay_sample_id),
         max_overlay_genes=int(args.max_overlay_genes),
+        overlay_organs=[str(organ) for organ in (args.overlay_organs or [])],
+        overlay_genes_per_organ=int(args.overlay_genes_per_organ),
     )
 
 
@@ -472,6 +481,70 @@ def summarize_gene_classes(per_gene: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values(["gene_class"]).reset_index(drop=True)
 
 
+def build_per_organ_gene_frame(
+    *,
+    genes: list[str],
+    organ_accumulators: dict[str, dict[str, VectorMetricAccumulator]],
+    selection_report: Path | None,
+) -> pd.DataFrame:
+    frames = []
+    for organ, accumulators in sorted(organ_accumulators.items()):
+        frame = build_per_gene_frame(
+            genes=genes,
+            accumulators=accumulators,
+            selection_report=selection_report,
+        )
+        frame.insert(0, "organ", organ)
+        frames.append(frame)
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True)
+
+
+def summarize_organ_evidence(
+    *,
+    per_organ_gene: pd.DataFrame,
+    per_organ_scalar: pd.DataFrame,
+    sample_meta: dict[str, dict[str, str]],
+    sample_ids: np.ndarray,
+) -> pd.DataFrame:
+    rows = []
+    metric_names = ["rate", "count_no_sf", "count_pred_sf", "count_oracle_sf"]
+    scalar_lookup = {
+        (str(row.organ), str(row.metric)): row
+        for row in per_organ_scalar.itertuples(index=False)
+        if hasattr(row, "organ") and hasattr(row, "metric")
+    }
+    for organ, group in per_organ_gene.groupby("organ", dropna=False):
+        organ_sample_ids = [sample_id for sample_id, meta in sample_meta.items() if meta["organ"] == organ]
+        spot_mask = np.isin(sample_ids.astype(str), organ_sample_ids)
+        row: dict[str, object] = {
+            "organ": organ,
+            "n_slides": int(len(organ_sample_ids)),
+            "n_spots": int(spot_mask.sum()),
+            "n_genes": int(group["gene"].nunique()),
+        }
+        for metric_name in metric_names:
+            vals = pd.to_numeric(group[f"{metric_name}_pearson"], errors="coerce").to_numpy(dtype=np.float64)
+            row[f"{metric_name}_mean_gene_pearson"] = float(np.nanmean(vals))
+            row[f"{metric_name}_median_gene_pearson"] = float(np.nanmedian(vals))
+            row[f"{metric_name}_valid_genes"] = int(np.isfinite(vals).sum())
+            scalar = scalar_lookup.get((str(organ), metric_name))
+            if scalar is not None:
+                row[f"{metric_name}_flat_pearson"] = float(getattr(scalar, "pearson"))
+                row[f"{metric_name}_flat_mae"] = float(getattr(scalar, "mae"))
+        count_no = row.get("count_no_sf_mean_gene_pearson", float("nan"))
+        count_pred = row.get("count_pred_sf_mean_gene_pearson", float("nan"))
+        count_oracle = row.get("count_oracle_sf_mean_gene_pearson", float("nan"))
+        predicted_gain = float(count_pred) - float(count_no)
+        oracle_gain = float(count_oracle) - float(count_no)
+        row["predicted_sf_gain_over_no_sf"] = predicted_gain
+        row["oracle_sf_gain_over_no_sf"] = oracle_gain
+        row["gain_capture_ratio"] = predicted_gain / oracle_gain if np.isfinite(oracle_gain) and abs(oracle_gain) > 1.0e-12 else float("nan")
+        rows.append(row)
+    return pd.DataFrame(rows).sort_values("organ").reset_index(drop=True)
+
+
 def select_overlay_genes(per_gene: pd.DataFrame, max_genes: int) -> pd.DataFrame:
     candidates = per_gene[
         per_gene["count_pred_sf_pearson"].notna()
@@ -508,6 +581,10 @@ def select_overlay_genes(per_gene: pd.DataFrame, max_genes: int) -> pd.DataFrame
     return pd.DataFrame(picks)
 
 
+def safe_slug(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9_.-]+", "_", str(value)).strip("_") or "unknown"
+
+
 def load_thumbnail(raw_root: Path, sample_id: str) -> Image.Image | None:
     paths = raw_slide_paths(raw_root, sample_id)
     if not paths.thumbnail.exists():
@@ -529,6 +606,19 @@ def scaled_xy(coords: np.ndarray, thumb: Image.Image, metadata: pd.DataFrame, sa
     x = coords[:, 0].astype(np.float32) * (thumb.width / full_w)
     y = coords[:, 1].astype(np.float32) * (thumb.height / full_h)
     return x, y
+
+
+def percentile_limits(values: np.ndarray, lower: float = 2.0, upper: float = 98.0) -> tuple[float, float]:
+    finite = values[np.isfinite(values)]
+    if finite.size == 0:
+        return 0.0, 1.0
+    lo = float(np.nanpercentile(finite, lower))
+    hi = float(np.nanpercentile(finite, upper))
+    if not np.isfinite(lo) or not np.isfinite(hi) or hi <= lo:
+        center = float(np.nanmedian(finite)) if finite.size else 0.0
+        pad = max(abs(center) * 0.05, 1.0e-3)
+        return center - pad, center + pad
+    return lo, hi
 
 
 def load_sample_coords(
@@ -621,17 +711,13 @@ def plot_expression_overlay(
     pred_log = np.log1p(values["pred_count"][measured])
     residual = pred_log - true_log
     sf_residual = np.log(values["pred_sf"][measured] + 1.0e-8) - np.log(values["true_sf"][measured] + 1.0e-8)
-    finite_tp = np.isfinite(true_log) & np.isfinite(pred_log)
-    if finite_tp.any():
-        lo = float(np.nanpercentile(np.concatenate([true_log[finite_tp], pred_log[finite_tp]]), 2))
-        hi = float(np.nanpercentile(np.concatenate([true_log[finite_tp], pred_log[finite_tp]]), 98))
-    else:
-        lo, hi = 0.0, 1.0
-    residual_abs = float(np.nanpercentile(np.abs(residual[np.isfinite(residual)]), 98)) if np.isfinite(residual).any() else 1.0
-    sf_abs = float(np.nanpercentile(np.abs(sf_residual[np.isfinite(sf_residual)]), 98)) if np.isfinite(sf_residual).any() else 1.0
+    true_lo, true_hi = percentile_limits(true_log)
+    pred_lo, pred_hi = percentile_limits(pred_log)
+    residual_abs = max(abs(x) for x in percentile_limits(np.abs(residual)))
+    sf_abs = max(abs(x) for x in percentile_limits(np.abs(sf_residual)))
     panels = [
-        ("true log1p count", true_log, "viridis", lo, hi),
-        ("pred log1p count", pred_log, "viridis", lo, hi),
+        ("measured log1p count", true_log, "viridis", true_lo, true_hi),
+        ("predicted log1p count", pred_log, "viridis", pred_lo, pred_hi),
         ("pred - true", residual, "RdBu_r", -residual_abs, residual_abs),
         ("log SF residual", sf_residual, "RdBu_r", -sf_abs, sf_abs),
     ]
@@ -728,6 +814,196 @@ def write_overlay_plots(
     return pd.DataFrame(rows)
 
 
+def choose_overlay_samples(
+    *,
+    manifest: pd.DataFrame,
+    sample_ids: np.ndarray,
+    raw_root: Path,
+    organs: list[str],
+) -> dict[str, str]:
+    sample_counts = pd.Series(sample_ids.astype(str)).value_counts().to_dict()
+    choices: dict[str, str] = {}
+    for organ in organs:
+        candidates = manifest[manifest["organ"].astype(str).eq(str(organ))].copy()
+        if candidates.empty:
+            continue
+        candidates["dataset_spots"] = candidates["sample_id"].astype(str).map(sample_counts).fillna(0).astype(int)
+        candidates = candidates.sort_values(["dataset_spots", "n_spots"], ascending=False)
+        for row in candidates.itertuples(index=False):
+            sample_id = str(row.sample_id)
+            if sample_counts.get(sample_id, 0) <= 0:
+                continue
+            if raw_slide_paths(raw_root, sample_id).thumbnail.exists():
+                choices[str(organ)] = sample_id
+                break
+    return choices
+
+
+def plan_organ_gene_overlays(
+    *,
+    per_organ_gene: pd.DataFrame,
+    organ_samples: dict[str, str],
+    max_genes: int,
+) -> pd.DataFrame:
+    rows = []
+    for organ, sample_id in organ_samples.items():
+        organ_gene = per_organ_gene[per_organ_gene["organ"].astype(str).eq(str(organ))].copy()
+        if organ_gene.empty:
+            continue
+        picks = select_overlay_genes(organ_gene, max_genes=max_genes)
+        for row in picks.itertuples(index=False):
+            rows.append(
+                {
+                    "organ": organ,
+                    "sample_id": sample_id,
+                    "gene": str(row.gene),
+                    "gene_index": int(row.gene_index),
+                    "gene_class": str(row.gene_class),
+                    "selection_reason": str(row.selection_reason),
+                    "organ_count_pred_sf_pearson": float(row.count_pred_sf_pearson),
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def collect_multi_overlay_values(
+    *,
+    ds: ExpressionRateDataset,
+    loader: DataLoader,
+    rate_model: torch.nn.Module,
+    pred_sf: np.ndarray,
+    overlay_plan: pd.DataFrame,
+    device: torch.device,
+) -> dict[tuple[str, str], dict[str, np.ndarray]]:
+    wanted: dict[str, dict[int, str]] = defaultdict(dict)
+    for row in overlay_plan.itertuples(index=False):
+        wanted[str(row.sample_id)][int(row.gene_index)] = str(row.gene)
+    chunks: dict[tuple[str, str], dict[str, list[np.ndarray]]] = {
+        (str(row.sample_id), str(row.gene)): defaultdict(list)
+        for row in overlay_plan.itertuples(index=False)
+    }
+    wanted_samples = set(wanted)
+    offset = 0
+    with torch.no_grad():
+        for batch in loader:
+            batch_size = batch["features"].shape[0]
+            stop = offset + batch_size
+            sample_ids = ds.sample_ids[offset:stop].astype(str)
+            present_samples = sorted(wanted_samples.intersection(set(sample_ids.tolist())))
+            if present_samples:
+                pred_log1p_rate = rate_model(batch["features"].to(device)).cpu().numpy()
+                pred_rate = np.expm1(pred_log1p_rate).clip(min=0.0)
+                true_rate = np.expm1(batch["log1p_rate"].numpy())
+                expression_mask = batch["expression_mask"].numpy().astype(bool)
+                true_sf = np.exp(batch["true_log_sf"].numpy().reshape(-1))
+                batch_pred_sf = pred_sf[offset:stop]
+                for sample_id in present_samples:
+                    keep_spot = sample_ids == sample_id
+                    for gene_idx, gene in wanted[sample_id].items():
+                        key = (sample_id, gene)
+                        measured = expression_mask[keep_spot, gene_idx]
+                        chunks[key]["measured"].append(measured)
+                        chunks[key]["true_count"].append((true_rate[keep_spot, gene_idx] * true_sf[keep_spot]).astype(np.float32))
+                        chunks[key]["pred_count"].append((pred_rate[keep_spot, gene_idx] * batch_pred_sf[keep_spot]).astype(np.float32))
+                        chunks[key]["pred_count_no_sf"].append(pred_rate[keep_spot, gene_idx].astype(np.float32))
+                        chunks[key]["pred_count_oracle_sf"].append((pred_rate[keep_spot, gene_idx] * true_sf[keep_spot]).astype(np.float32))
+                        chunks[key]["pred_sf"].append(batch_pred_sf[keep_spot].astype(np.float32))
+                        chunks[key]["true_sf"].append(true_sf[keep_spot].astype(np.float32))
+            offset = stop
+    out: dict[tuple[str, str], dict[str, np.ndarray]] = {}
+    for key, values in chunks.items():
+        out[key] = {name: np.concatenate(parts, axis=0) for name, parts in values.items() if parts}
+    return out
+
+
+def write_organ_overlay_plots(
+    *,
+    ctx: DiagnosticsContext,
+    ds: ExpressionRateDataset,
+    loader: DataLoader,
+    rate_model: torch.nn.Module,
+    pred_sf: np.ndarray,
+    per_organ_gene: pd.DataFrame,
+    manifest: pd.DataFrame,
+    manifest_base: Path,
+) -> pd.DataFrame:
+    if per_organ_gene.empty or not ctx.overlay_organs or ctx.overlay_genes_per_organ <= 0:
+        return pd.DataFrame()
+    metadata_csv = resolve_project_path(ctx.expression_config["paths"]["metadata_csv"])
+    raw_root = resolve_project_path(ctx.expression_config["paths"]["raw_root"])
+    if metadata_csv is None or raw_root is None:
+        raise ValueError("metadata_csv/raw_root resolved to None")
+    metadata = pd.read_csv(metadata_csv)
+    organ_samples = choose_overlay_samples(
+        manifest=manifest,
+        sample_ids=ds.sample_ids,
+        raw_root=raw_root,
+        organs=ctx.overlay_organs,
+    )
+    overlay_plan = plan_organ_gene_overlays(
+        per_organ_gene=per_organ_gene,
+        organ_samples=organ_samples,
+        max_genes=ctx.overlay_genes_per_organ,
+    )
+    if overlay_plan.empty:
+        return overlay_plan
+    values_by_key = collect_multi_overlay_values(
+        ds=ds,
+        loader=loader,
+        rate_model=rate_model,
+        pred_sf=pred_sf,
+        overlay_plan=overlay_plan,
+        device=ctx.device,
+    )
+    coords_cache: dict[str, np.ndarray] = {}
+    rows = []
+    for row in overlay_plan.itertuples(index=False):
+        sample_id = str(row.sample_id)
+        gene = str(row.gene)
+        if sample_id not in coords_cache:
+            coords = load_sample_coords(
+                manifest=manifest,
+                manifest_base=manifest_base,
+                sample_id=sample_id,
+                min_total_counts=float(ctx.expression_config["data"].get("min_total_counts", 1.0)),
+            )
+            if coords.shape[0] != int((ds.sample_ids == sample_id).sum()):
+                raise ValueError(
+                    f"Coordinate count mismatch for {sample_id}: coords={coords.shape[0]}, dataset={(ds.sample_ids == sample_id).sum()}"
+                )
+            coords_cache[sample_id] = coords
+        out_path = (
+            ctx.out_dir
+            / "gene_spatial_maps"
+            / safe_slug(str(row.organ))
+            / f"{sample_id}_{safe_slug(gene)}.png"
+        )
+        values = values_by_key.get((sample_id, gene), {})
+        ok = bool(values) and plot_expression_overlay(
+            sample_id=sample_id,
+            gene=gene,
+            coords=coords_cache[sample_id],
+            values=values,
+            raw_root=raw_root,
+            metadata=metadata,
+            out_path=out_path,
+        )
+        rows.append(
+            {
+                "organ": str(row.organ),
+                "sample_id": sample_id,
+                "gene": gene,
+                "gene_index": int(row.gene_index),
+                "gene_class": str(row.gene_class),
+                "selection_reason": str(row.selection_reason),
+                "organ_count_pred_sf_pearson": float(row.organ_count_pred_sf_pearson),
+                "path": str(out_path),
+                "written": ok,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def run(ctx: DiagnosticsContext) -> dict[str, object]:
     ctx.out_dir.mkdir(parents=True, exist_ok=True)
     manifest_path = resolve_project_path(ctx.expression_config["data"]["manifest"])
@@ -794,6 +1070,16 @@ def run(ctx: DiagnosticsContext) -> dict[str, object]:
         "count_pred_sf": VectorMetricAccumulator(n_genes),
         "count_oracle_sf": VectorMetricAccumulator(n_genes),
     }
+    organ_gene_accumulators = {
+        organ: {
+            "rate": VectorMetricAccumulator(n_genes),
+            "count_no_sf": VectorMetricAccumulator(n_genes),
+            "count_pred_sf": VectorMetricAccumulator(n_genes),
+            "count_oracle_sf": VectorMetricAccumulator(n_genes),
+        }
+        for organ in sorted({meta["organ"] for meta in sample_meta.values()})
+    }
+    sample_to_organ = {sample_id: meta["organ"] for sample_id, meta in sample_meta.items()}
     group_accumulators: dict[tuple[str, str], ScalarMetricAccumulator] = defaultdict(ScalarMetricAccumulator)
     offset = 0
     with torch.no_grad():
@@ -816,6 +1102,14 @@ def run(ctx: DiagnosticsContext) -> dict[str, object]:
             }
             for metric_name, (pred, true) in predictions.items():
                 gene_accumulators[metric_name].update(pred, true, expression_mask)
+                for organ in sorted(set(sample_to_organ.values())):
+                    organ_spot_mask = np.asarray([sample_to_organ.get(sample_id) == organ for sample_id in batch_sample_ids], dtype=bool)
+                    if np.any(organ_spot_mask):
+                        organ_gene_accumulators[organ][metric_name].update(
+                            pred[organ_spot_mask],
+                            true[organ_spot_mask],
+                            expression_mask[organ_spot_mask],
+                        )
                 update_group_accumulators(
                     accumulators=group_accumulators,
                     pred=pred,
@@ -838,6 +1132,19 @@ def run(ctx: DiagnosticsContext) -> dict[str, object]:
     overall_metrics.to_csv(ctx.out_dir / "overall_expression_metrics.csv", index=False)
     per_organ.to_csv(ctx.out_dir / "per_organ_metrics.csv", index=False)
     per_slide.to_csv(ctx.out_dir / "per_slide_metrics.csv", index=False)
+    per_organ_gene = build_per_organ_gene_frame(
+        genes=genes,
+        organ_accumulators=organ_gene_accumulators,
+        selection_report=selection_report,
+    )
+    per_organ_gene.to_csv(ctx.out_dir / "per_organ_gene_metrics.csv", index=False)
+    organ_summary = summarize_organ_evidence(
+        per_organ_gene=per_organ_gene,
+        per_organ_scalar=per_organ,
+        sample_meta=sample_meta,
+        sample_ids=ds.sample_ids,
+    )
+    organ_summary.to_csv(ctx.out_dir / "organ_summary.csv", index=False)
     overlay_manifest = write_overlay_plots(
         ctx=ctx,
         ds=ds,
@@ -849,9 +1156,20 @@ def run(ctx: DiagnosticsContext) -> dict[str, object]:
         manifest_base=manifest_base,
     )
     overlay_manifest.to_csv(ctx.out_dir / "spatial_overlay_manifest.csv", index=False)
+    organ_overlay_manifest = write_organ_overlay_plots(
+        ctx=ctx,
+        ds=ds,
+        loader=loader,
+        rate_model=rate_model,
+        pred_sf=pred_sf,
+        per_organ_gene=per_organ_gene,
+        manifest=manifest,
+        manifest_base=manifest_base,
+    )
+    organ_overlay_manifest.to_csv(ctx.out_dir / "organ_gene_spatial_map_manifest.csv", index=False)
 
     summary = {
-        "expression_config": str(resolve_project_path(Path("configs/hest1k_human_visium_expression_highconf_symbol95.yaml"))),
+        "expression_config": str(ctx.expression_config_path),
         "sf_checkpoint": str(ctx.sf_checkpoint),
         "expression_checkpoint": str(ctx.expression_checkpoint),
         "splits": ctx.splits,
@@ -866,8 +1184,11 @@ def run(ctx: DiagnosticsContext) -> dict[str, object]:
             "per_gene_metrics": str(ctx.out_dir / "per_gene_metrics.csv"),
             "per_slide_metrics": str(ctx.out_dir / "per_slide_metrics.csv"),
             "per_organ_metrics": str(ctx.out_dir / "per_organ_metrics.csv"),
+            "per_organ_gene_metrics": str(ctx.out_dir / "per_organ_gene_metrics.csv"),
+            "organ_summary": str(ctx.out_dir / "organ_summary.csv"),
             "gene_class_summary": str(ctx.out_dir / "gene_class_summary.csv"),
             "spatial_overlay_manifest": str(ctx.out_dir / "spatial_overlay_manifest.csv"),
+            "organ_gene_spatial_map_manifest": str(ctx.out_dir / "organ_gene_spatial_map_manifest.csv"),
         },
     }
     (ctx.out_dir / "run_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")

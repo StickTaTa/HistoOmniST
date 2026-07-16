@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "histoomnist"
+version = "0.1.0"
+description = "H&E-to-virtual-spatial-transcriptomics prediction with expression-rate and size-factor decomposition."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+dependencies = [
+  "numpy>=1.26,<2",
+  "pandas>=2.0",
+  "scipy>=1.10",
+  "scikit-learn>=1.2",
+  "PyYAML>=6.0",
+  "torch>=2.0",
+  "tqdm>=4.64",
+]
+
+[project.optional-dependencies]
+hest = [
+  "anndata>=0.9",
+  "h5py>=3.8",
+  "huggingface-hub>=0.20",
+]
+wsi = [
+  "matplotlib>=3.7",
+  "openslide-python>=1.3",
+  "Pillow>=10",
+  "tifffile>=2024.1",
+  "zarr>=2.16,<3",
+]
+analysis = [
+  "requests>=2.31",
+  "statsmodels>=0.14",
+]
+notebooks = [
+  "ipykernel>=6.25",
+  "jupyterlab>=4",
+  "nbformat>=5.9",
+]
+dev = [
+  "build>=1.2",
+  "pytest>=7",
+  "ruff>=0.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/StickTaTa/HistoOmniST"
+Repository = "https://github.com/StickTaTa/HistoOmniST"
+
+[project.scripts]
+histoomnist-train-sf = "histoomnist.train.train_sf:main"
+histoomnist-train-expression = "histoomnist.train.train_expression:main"
+histoomnist-eval-sf = "histoomnist.eval.evaluate_sf:main"
+histoomnist-eval-expression = "histoomnist.eval.evaluate_expression:main"
+histoomnist-eval-combined = "histoomnist.eval.evaluate_combined:main"
+histoomnist-predict-sf = "histoomnist.eval.predict_sf:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["histoomnist*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

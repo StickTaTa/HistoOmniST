@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use HistoOmniST, please cite the software and accompanying manuscript."
+title: "HistoOmniST"
+type: software
+version: 0.1.0
+date-released: 2026-07-16
+repository-code: "https://github.com/StickTaTa/HistoOmniST"
+authors:
+  - family-names: Huang
+    given-names: Jinjin
+  - family-names: Zheng
+    given-names: Lingling
+preferred-citation:
+  type: article
+  title: "HistoOmniST maps count-scale virtual spatial transcriptomes from histology to identify breast cancer immune-proliferation ecology"
+  authors:
+    - family-names: Huang
+      given-names: Jinjin
+    - family-names: Zheng
+      given-names: Lingling
+  year: 2026
