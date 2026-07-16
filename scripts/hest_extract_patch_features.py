@@ -34,7 +34,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--local-paths", type=Path, default=Path("configs/local_paths.yaml"))
     parser.add_argument("--raw-root", type=Path, default=None)
     parser.add_argument("--processed-root", type=Path, default=None)
+    parser.add_argument("--species", default=None)
+    parser.add_argument("--st-technology", default=None)
+    parser.add_argument("--min-spots-under-tissue", type=int, default=None)
     parser.add_argument("--sample-id", action="append", default=None)
+    parser.add_argument("--sample-list", type=Path, default=None, help="Text file with one sample id per line.")
     parser.add_argument("--max-slides", type=int, default=None)
     parser.add_argument("--model", choices=["rgb_stats", "hipt256"], default="rgb_stats")
     parser.add_argument("--device", default="auto")
@@ -51,6 +55,20 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def requested_sample_ids(sample_ids: list[str] | None, sample_list: Path | None) -> list[str] | None:
+    ids = list(sample_ids or [])
+    if sample_list is not None:
+        path = resolve_project_path(sample_list)
+        ids.extend(
+            line.strip()
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.strip().startswith("#")
+        )
+    if not ids:
+        return None
+    return list(dict.fromkeys(ids))
+
+
 def read_local_paths(path: Path) -> dict:
     path = resolve_project_path(path)
     if not path.exists():
@@ -58,14 +76,25 @@ def read_local_paths(path: Path) -> dict:
     return load_config(path)
 
 
-def select_slides(cfg: dict, sample_ids: list[str] | None, max_slides: int | None) -> pd.DataFrame:
+def select_slides(
+    cfg: dict,
+    sample_ids: list[str] | None,
+    max_slides: int | None,
+    species: str | None,
+    st_technology: str | None,
+    min_spots_under_tissue: int | None,
+) -> pd.DataFrame:
     metadata = load_hest_metadata(resolve_project_path(cfg["paths"]["metadata_csv"]))
     filters = cfg["filters"]
     selected = filter_hest_metadata(
         metadata,
-        species=str(filters.get("species", "Homo sapiens")),
-        st_technology=str(filters.get("st_technology", "Visium")),
-        min_spots_under_tissue=int(filters.get("min_spots_under_tissue", 200)),
+        species=str(species or filters.get("species", "Homo sapiens")),
+        st_technology=str(st_technology or filters.get("st_technology", "Visium")),
+        min_spots_under_tissue=int(
+            filters.get("min_spots_under_tissue", 200)
+            if min_spots_under_tissue is None
+            else min_spots_under_tissue
+        ),
     )
     if sample_ids:
         wanted = set(sample_ids)
@@ -216,7 +245,15 @@ def main() -> None:
     cfg = load_config(resolve_project_path(args.config))
     raw_root = resolve_project_path(args.raw_root or cfg["paths"]["raw_root"])
     processed_root = resolve_project_path(args.processed_root or cfg["paths"]["processed_root"])
-    slides = select_slides(cfg, args.sample_id, args.max_slides)
+    sample_ids_arg = requested_sample_ids(args.sample_id, args.sample_list)
+    slides = select_slides(
+        cfg,
+        sample_ids_arg,
+        args.max_slides,
+        args.species,
+        args.st_technology,
+        args.min_spots_under_tissue,
+    )
 
     local_paths = read_local_paths(args.local_paths)
     device = get_device_name(args.device)
@@ -268,4 +305,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

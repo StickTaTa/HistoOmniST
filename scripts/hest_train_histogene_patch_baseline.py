@@ -42,6 +42,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--n-pos", type=int, default=64)
     parser.add_argument("--lr", type=float, default=1.0e-4)
     parser.add_argument("--weight-decay", type=float, default=0.0)
+    parser.add_argument("--patience", type=int, default=None)
+    parser.add_argument("--min-delta", type=float, default=0.0)
     parser.add_argument("--seed", type=int, default=2026)
     parser.add_argument("--device", default=None)
     parser.add_argument("--max-train-slides", type=int, default=None)
@@ -92,6 +94,8 @@ def main() -> None:
         max_val_slides=args.max_val_slides,
         max_train_chunks_per_slide=args.max_train_chunks_per_slide,
         max_val_chunks_per_slide=args.max_val_chunks_per_slide,
+        patience=args.patience,
+        min_delta=float(args.min_delta),
         seed=int(args.seed),
     )
     prediction_summary = None

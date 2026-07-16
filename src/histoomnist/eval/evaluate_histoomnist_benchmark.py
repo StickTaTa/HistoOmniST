@@ -193,6 +193,7 @@ def evaluate_histoomnist_benchmark(
     out_dir: str | Path,
     splits: list[str] | None = None,
     batch_size: int | None = None,
+    max_slide_spots: int | None = None,
 ) -> dict[str, object]:
     device = torch.device(get_device_name(expression_config.get("device")))
     expression_ckpt = load_checkpoint(expression_checkpoint, map_location=str(device))
@@ -201,6 +202,10 @@ def evaluate_histoomnist_benchmark(
     manifest = read_manifest(manifest_path)
     selected_splits = splits or list(expression_config["data"]["test_splits"])
     manifest = manifest[manifest["split"].isin(selected_splits)].copy()
+    if max_slide_spots is not None:
+        if "n_spots" not in manifest.columns:
+            raise ValueError("Manifest lacks n_spots; cannot apply max_slide_spots.")
+        manifest = manifest[manifest["n_spots"].astype(int) <= int(max_slide_spots)].copy()
     if manifest.empty:
         raise ValueError(f"No manifest rows for splits={selected_splits}")
     base_dir = manifest_path.parent
@@ -235,6 +240,7 @@ def evaluate_histoomnist_benchmark(
     )
     label_lookup = sample_labels(manifest)
     method_kinds = {
+        "histoomnist_log1p_rate": "log1p_rate",
         "histoomnist_rate": "rate",
         "histoomnist_count_no_sf": "count",
         "histoomnist_count_pred_sf": "count",
@@ -248,8 +254,9 @@ def evaluate_histoomnist_benchmark(
     with torch.no_grad():
         for batch_idx, batch in enumerate(loader, start=1):
             pred_log1p_rate = rate_model(batch["features"].to(device)).cpu().numpy()
+            true_log1p_rate = batch["log1p_rate"].numpy()
             pred_rate = np.expm1(pred_log1p_rate).clip(min=0.0)
-            true_rate = np.expm1(batch["log1p_rate"].numpy())
+            true_rate = np.expm1(true_log1p_rate)
             expression_mask = batch["expression_mask"].numpy().astype(bool)
             batch_size_actual = pred_rate.shape[0]
             stop = offset + batch_size_actual
@@ -258,6 +265,7 @@ def evaluate_histoomnist_benchmark(
             batch_sample_ids = ds.sample_ids[offset:stop].astype(str)
             true_count = true_rate * batch_true_sf[:, None]
             predictions = {
+                "histoomnist_log1p_rate": (pred_log1p_rate, true_log1p_rate),
                 "histoomnist_rate": (pred_rate, true_rate),
                 "histoomnist_count_no_sf": (pred_rate, true_count),
                 "histoomnist_count_pred_sf": (pred_rate * batch_pred_sf[:, None], true_count),
@@ -303,6 +311,7 @@ def evaluate_histoomnist_benchmark(
     pd.DataFrame(method_rows).to_csv(out / "summary.csv", index=False)
     summary = {
         "splits": list(selected_splits),
+        "max_slide_spots": None if max_slide_spots is None else int(max_slide_spots),
         "n_spots": int(len(ds)),
         "n_slides": int(len(np.unique(ds.sample_ids))),
         "n_genes": int(len(genes)),
@@ -329,6 +338,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--sf-checkpoint", default=None)
     parser.add_argument("--splits", nargs="*", default=None)
     parser.add_argument("--batch-size", type=int, default=None)
+    parser.add_argument("--max-slide-spots", type=int, default=None)
     parser.add_argument("--out-dir", default="results/hest1k_human_visium_expression/benchmark_results/histoomnist_coverage95")
     return parser.parse_args()
 
@@ -350,6 +360,7 @@ def main() -> None:
         out_dir=args.out_dir,
         splits=args.splits,
         batch_size=args.batch_size,
+        max_slide_spots=args.max_slide_spots,
     )
 
 

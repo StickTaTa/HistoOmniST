@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import numpy as np
+import pandas as pd
 
 INVALID_GENE_KEYS = {"", "nan", "none", "null", "unspecified_gene_id"}
+ENSEMBL_RE = re.compile(r"^ENSG\d+(?:\.\d+)?$")
+DEFAULT_ENSEMBL_SYMBOL_MAP = "hest_local_ensembl_to_symbol_map.csv"
 
 
 def normalize_gene_key(value: object) -> str | None:
@@ -12,6 +16,13 @@ def normalize_gene_key(value: object) -> str | None:
     if key.lower() in INVALID_GENE_KEYS:
         return None
     return key
+
+
+def ensembl_stable_id(value: object) -> str | None:
+    key = normalize_gene_key(value)
+    if key is None or ENSEMBL_RE.match(key) is None:
+        return None
+    return key.split(".", 1)[0]
 
 
 def load_gene_names(path: str | Path | None) -> list[str] | None:
@@ -63,21 +74,86 @@ def gene_key_settings_from_config(cfg: dict) -> tuple[str, Path | None]:
     return gene_key, None if raw_st_root in (None, "") else Path(raw_st_root)
 
 
+def default_ensembl_symbol_map_path(h5ad_path: str | Path) -> Path:
+    path = Path(h5ad_path).resolve()
+    try:
+        return path.parents[2] / "manifests" / DEFAULT_ENSEMBL_SYMBOL_MAP
+    except IndexError:
+        return path.parent / DEFAULT_ENSEMBL_SYMBOL_MAP
+
+
+def load_ensembl_symbol_map(path: str | Path) -> dict[str, str]:
+    p = Path(path).resolve()
+    if not p.exists():
+        return {}
+    frame = pd.read_csv(p)
+    required = {"ensembl_id", "symbol"}
+    if not required.issubset(frame.columns):
+        raise ValueError(f"Ensembl symbol map must contain columns {sorted(required)}: {p}")
+    mapping: dict[str, str] = {}
+    for row in frame.itertuples(index=False):
+        ensembl_id = ensembl_stable_id(getattr(row, "ensembl_id"))
+        symbol = normalize_gene_key(getattr(row, "symbol"))
+        if ensembl_id is None or symbol is None:
+            continue
+        mapping[ensembl_id] = symbol
+    return mapping
+
+
+def map_ensembl_keys_to_symbols(keys: list[str | None], map_path: str | Path) -> list[str | None]:
+    mapping = load_ensembl_symbol_map(map_path)
+    if not mapping:
+        return keys
+    mapped: list[str | None] = []
+    for key in keys:
+        ensembl_id = ensembl_stable_id(key)
+        mapped.append(mapping.get(ensembl_id, key) if ensembl_id is not None else key)
+    return mapped
+
+
 def load_h5ad_gene_symbols(h5ad_path: str | Path) -> list[str | None]:
     try:
         import anndata as ad
     except ImportError as exc:
-        raise ImportError("Install anndata to read canonical H5AD gene symbols.") from exc
+        try:
+            import h5py
+        except ImportError:
+            raise ImportError("Install anndata or h5py to read canonical H5AD gene symbols.") from exc
+
+        def _decode_values(values) -> list[str | None]:
+            keys: list[str | None] = []
+            for value in values:
+                if isinstance(value, bytes):
+                    value = value.decode("utf-8")
+                keys.append(normalize_gene_key(value))
+            return keys
+
+        with h5py.File(h5ad_path, "r") as handle:
+            var = handle["var"]
+            has_symbol = "SYMBOL" in var
+            if has_symbol:
+                keys = _decode_values(var["SYMBOL"][()])
+            elif "_index" in var:
+                keys = _decode_values(var["_index"][()])
+            else:
+                raise ValueError(f"H5AD lacks var/SYMBOL and var/_index: {h5ad_path}")
+        if not has_symbol:
+            keys = map_ensembl_keys_to_symbols(keys, default_ensembl_symbol_map_path(h5ad_path))
+        return keys
 
     adata = ad.read_h5ad(h5ad_path, backed="r")
     try:
-        if "SYMBOL" in adata.var.columns:
+        has_symbol = "SYMBOL" in adata.var.columns
+        if has_symbol:
             values = adata.var["SYMBOL"].to_numpy()
         else:
             values = adata.var_names
-        return [normalize_gene_key(value) for value in values]
+        keys = [normalize_gene_key(value) for value in values]
     finally:
         adata.file.close()
+    if not has_symbol:
+        keys = map_ensembl_keys_to_symbols(keys, default_ensembl_symbol_map_path(h5ad_path))
+    return keys
 
 
 def load_gene_keys_for_slide(

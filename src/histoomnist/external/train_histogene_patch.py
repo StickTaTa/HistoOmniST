@@ -74,10 +74,17 @@ def train_histogene_patch(
     max_val_slides: int | None = None,
     max_train_chunks_per_slide: int | None = None,
     max_val_chunks_per_slide: int | None = None,
+    patience: int | None = None,
+    min_delta: float = 0.0,
     seed: int = 2026,
 ) -> dict[str, Any]:
     set_seed(int(seed))
     device = torch.device(get_device_name(device_name or expression_config.get("device")))
+    print(
+        f"[histogene] resolved_device={device}"
+        + (f" cuda_name={torch.cuda.get_device_name(device)}" if device.type == "cuda" else ""),
+        flush=True,
+    )
     train_ds = HistogenePatchH5ChunkDataset(
         expression_config,
         splits=train_splits,
@@ -103,6 +110,9 @@ def train_histogene_patch(
     best_path = out_dir / "best.pt"
     history = []
     best_val = float("inf")
+    best_epoch = 0
+    stale_epochs = 0
+    stopped_early = False
     for epoch in range(1, int(epochs) + 1):
         train_loss = run_epoch(
             model=model,
@@ -120,8 +130,11 @@ def train_histogene_patch(
         row = {"epoch": int(epoch), "train_loss": train_loss, "val_loss": val_loss}
         history.append(row)
         print(f"epoch={epoch:03d} train_loss={train_loss:.6f} val_loss={val_loss:.6f}", flush=True)
-        if val_loss < best_val:
+        improved = val_loss < (best_val - float(min_delta))
+        if improved:
             best_val = val_loss
+            best_epoch = int(epoch)
+            stale_epochs = 0
             save_checkpoint(
                 best_path,
                 checkpoint_payload(
@@ -141,11 +154,26 @@ def train_histogene_patch(
                     },
                 ),
             )
+        else:
+            stale_epochs += 1
+        if patience is not None and stale_epochs >= int(patience):
+            stopped_early = True
+            print(
+                f"early_stop epoch={epoch:03d} best_epoch={best_epoch:03d} "
+                f"best_val_loss={best_val:.6f} patience={int(patience)}",
+                flush=True,
+            )
+            break
     summary = {
         "checkpoint": str(best_path),
         "device": str(device),
         "target_kind": target_kind,
-        "epochs": int(epochs),
+        "epochs": int(len(history)),
+        "max_epochs": int(epochs),
+        "best_epoch": int(best_epoch),
+        "early_stopping_patience": "" if patience is None else int(patience),
+        "early_stopping_min_delta": float(min_delta),
+        "stopped_early": bool(stopped_early),
         "batch_size": int(batch_size),
         "chunk_size": int(chunk_size),
         "seed": int(seed),

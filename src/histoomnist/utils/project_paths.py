@@ -51,9 +51,9 @@ def load_local_paths(config_path: str | Path | None = None) -> LocalPaths:
     root = project_root()
     if cfg_path is None or not cfg_path.exists():
         data = {
-            "old_project_root": "E:/Morpho-FM",
+            "old_project_root": str(root),
             "new_project_root": str(root),
-            "manuscript_root": "C:/Users/Administrator/Desktop/人生的第4篇论文/manuscript",
+            "manuscript_root": str(root),
             "data_root": str(root / "data"),
             "output_root": str(root / "results"),
             "figure_root": str(root / "figures"),

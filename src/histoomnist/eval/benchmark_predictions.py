@@ -396,6 +396,8 @@ def evaluate_prediction_bundle(
     prediction_genes_path: str | Path | None = None,
     oracle_smoke_test: bool = False,
     max_slides: int | None = None,
+    slide_ids: list[str] | None = None,
+    max_slide_spots: int | None = None,
 ) -> dict[str, object]:
     if prediction_kind not in PREDICTION_KINDS:
         raise ValueError(f"prediction_kind must be one of {sorted(PREDICTION_KINDS)}")
@@ -406,6 +408,13 @@ def evaluate_prediction_bundle(
     manifest = read_manifest(manifest_path)
     selected_splits = splits or list(expression_config["data"]["test_splits"])
     manifest = manifest[manifest["split"].isin(selected_splits)].copy()
+    if slide_ids:
+        wanted = {str(x) for x in slide_ids}
+        manifest = manifest[manifest["sample_id"].astype(str).isin(wanted)].copy()
+    if max_slide_spots is not None:
+        if "n_spots" not in manifest.columns:
+            raise ValueError("Manifest lacks n_spots; cannot apply max_slide_spots.")
+        manifest = manifest[manifest["n_spots"].astype(int) <= int(max_slide_spots)].copy()
     if max_slides is not None:
         manifest = manifest.head(int(max_slides)).copy()
     if manifest.empty:
@@ -508,6 +517,8 @@ def evaluate_prediction_bundle(
         "prediction_kind": prediction_kind,
         "oracle_smoke_test": bool(oracle_smoke_test),
         "splits": list(selected_splits),
+        "slide_ids": None if slide_ids is None else [str(x) for x in slide_ids],
+        "max_slide_spots": None if max_slide_spots is None else int(max_slide_spots),
         "n_slides": int(len(slide_rows)),
         "n_target_genes": int(len(target_genes)),
         "n_prediction_genes": int(len(prediction_genes)),
@@ -543,6 +554,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--out-dir", required=True)
     parser.add_argument("--oracle-smoke-test", action="store_true")
     parser.add_argument("--max-slides", type=int, default=None)
+    parser.add_argument("--slide-ids", nargs="*", default=None)
+    parser.add_argument("--max-slide-spots", type=int, default=None)
     return parser.parse_args()
 
 
@@ -560,6 +573,8 @@ def main() -> None:
         prediction_genes_path=args.prediction_genes_path,
         oracle_smoke_test=bool(args.oracle_smoke_test),
         max_slides=args.max_slides,
+        slide_ids=args.slide_ids,
+        max_slide_spots=args.max_slide_spots,
     )
 
 
