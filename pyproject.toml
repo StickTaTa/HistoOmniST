@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "histoomnist"
-version = "0.1.0"
+version = "0.1.1"
 description = "H&E-to-virtual-spatial-transcriptomics prediction with expression-rate and size-factor decomposition."
 readme = "README.md"
 requires-python = ">=3.10"

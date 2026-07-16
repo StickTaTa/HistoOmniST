@@ -1,12 +1,12 @@
 {
-  "release": "v0.1.0",
+  "release": "v0.1.1",
   "repository": "https://github.com/StickTaTa/HistoOmniST",
   "assets": [
     {
       "id": "expression_rate",
-      "filename": "histoomnist_expression_rate_hest1k_v0.1.0.pt",
+      "filename": "histoomnist_expression_rate_hest1k_v0.1.1.pt",
       "target": "checkpoints/hest1k_human_visium_expression/highconf_symbol95_rate/best.pt",
-      "url": "https://github.com/StickTaTa/HistoOmniST/releases/download/v0.1.0/histoomnist_expression_rate_hest1k_v0.1.0.pt",
+      "url": "https://github.com/StickTaTa/HistoOmniST/releases/download/v0.1.1/histoomnist_expression_rate_hest1k_v0.1.1.pt",
       "bytes": 22851145,
       "sha256": "baf13faa87bcfe6f8c57d08ba24b12f2e11961d39be5c7cff45f6a4275a85362",
       "output": "log1p expression rate",
@@ -16,9 +16,9 @@
     },
     {
       "id": "size_factor",
-      "filename": "histoomnist_size_factor_hest1k_v0.1.0.pt",
+      "filename": "histoomnist_size_factor_hest1k_v0.1.1.pt",
       "target": "checkpoints/hest1k_human_visium_sf/context_distribution_light_hipt256_leave_slide_out/best.pt",
-      "url": "https://github.com/StickTaTa/HistoOmniST/releases/download/v0.1.0/histoomnist_size_factor_hest1k_v0.1.0.pt",
+      "url": "https://github.com/StickTaTa/HistoOmniST/releases/download/v0.1.1/histoomnist_size_factor_hest1k_v0.1.1.pt",
       "bytes": 50879405,
       "sha256": "104bfb28ea2b3e93c70000418ee4aafda8923339440f5eee70a29c81c61f4d1e",
       "output": "log mean-one slide-normalized size factor",

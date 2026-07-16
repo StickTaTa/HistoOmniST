@@ -2,6 +2,8 @@ import json
 import importlib.util
 from pathlib import Path
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -35,6 +37,24 @@ EXPECTED_GENES = [
     "MYC",
     "ASCL2",
 ]
+
+
+def test_release_metadata_targets_v0_1_1() -> None:
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    citation = yaml.safe_load((ROOT / "CITATION.cff").read_text(encoding="utf-8"))
+    manifest = json.loads(
+        (ROOT / "models" / "release_manifest.json").read_text(encoding="utf-8")
+    )
+
+    assert 'version = "0.1.1"' in pyproject
+    assert citation["version"] == "0.1.1"
+    assert str(citation["date-released"]) == "2026-07-17"
+    assert manifest["release"] == "v0.1.1"
+
+    for asset in manifest["assets"]:
+        assert asset["filename"].endswith("_v0.1.1.pt")
+        assert "/releases/download/v0.1.1/" in asset["url"]
+        assert asset["url"].endswith(asset["filename"])
 
 
 def test_release_panel_matches_the_public_atlas_contract() -> None:

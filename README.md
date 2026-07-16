@@ -48,7 +48,7 @@ experimental spatial profiling when tissue and resources are available.
 | Whole-slide and cohort inference | [Inference](docs/inference.md) |
 | HEST-1k preparation and model training | [Training](docs/training.md) |
 | Ten-method evaluation | [Benchmark workflow](docs/benchmark.md) |
-| Frozen model files | [Release v0.1.0](https://github.com/StickTaTa/HistoOmniST/releases/tag/v0.1.0) |
+| Frozen model files | [Release v0.1.1](https://github.com/StickTaTa/HistoOmniST/releases/tag/v0.1.1) |
 
 ## Quick start
 
@@ -71,7 +71,7 @@ for large whole-slide images.
 python scripts/download_release_models.py
 ```
 
-The downloader retrieves both assets from GitHub Release `v0.1.0`, places them
+The downloader retrieves both assets from GitHub Release `v0.1.1`, places them
 at the paths expected by the public workflows and verifies file size and
 SHA-256 against [`models/release_manifest.json`](models/release_manifest.json).
 
