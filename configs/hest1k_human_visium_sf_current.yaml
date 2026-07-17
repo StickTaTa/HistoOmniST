@@ -21,7 +21,6 @@ selection_reason:
     Full-dataset trained context + light distribution model gives the best
     high-confidence test correlation and tail recovery among evaluated candidates.
   primary_metric: log_sf_pearson
-  comparator_notebook: notebooks/03_hest1k_highconf_sf_model.ipynb
 
 test_metrics_on_highconf:
   log_sf_pearson: 0.7860

@@ -39,7 +39,7 @@ EXPECTED_GENES = [
 ]
 
 
-def test_release_metadata_targets_v0_1_1() -> None:
+def test_software_patch_uses_the_unchanged_v0_1_0_model_release() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
     citation = yaml.safe_load((ROOT / "CITATION.cff").read_text(encoding="utf-8"))
     manifest = json.loads(
@@ -49,11 +49,11 @@ def test_release_metadata_targets_v0_1_1() -> None:
     assert 'version = "0.1.1"' in pyproject
     assert citation["version"] == "0.1.1"
     assert str(citation["date-released"]) == "2026-07-17"
-    assert manifest["release"] == "v0.1.1"
+    assert manifest["release"] == "v0.1.0"
 
     for asset in manifest["assets"]:
-        assert asset["filename"].endswith("_v0.1.1.pt")
-        assert "/releases/download/v0.1.1/" in asset["url"]
+        assert asset["filename"].endswith("_v0.1.0.pt")
+        assert "/releases/download/v0.1.0/" in asset["url"]
         assert asset["url"].endswith(asset["filename"])
 
 

@@ -1,6 +1,7 @@
 # Pretrained models
 
-The two frozen HistoOmniST checkpoints are attached to GitHub release `v0.1.1`.
+The two frozen HistoOmniST checkpoints are attached to GitHub release `v0.1.0`.
+Software patch releases reuse these byte-identical model assets.
 Run `python scripts/download_release_models.py` to download both files and verify
 their SHA-256 checksums.
 
