@@ -19,13 +19,9 @@ env/
 !.env.example
 configs/local_paths.yaml
 
-# Editors and local agent state
+# Editors and operating-system files
 .idea/
 .vscode/
-.worktrees/
-.codex_tmp/
-AGENTS.md
-codex_*conversations*
 .DS_Store
 Thumbs.db
 
