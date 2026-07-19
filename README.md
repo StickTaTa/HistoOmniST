@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/StickTaTa/HistoOmniST/actions/workflows/ci.yml/badge.svg)](https://github.com/StickTaTa/HistoOmniST/actions/workflows/ci.yml)
 [![Release](https://img.shields.io/github/v/release/StickTaTa/HistoOmniST)](https://github.com/StickTaTa/HistoOmniST/releases/latest)
+[![Web portal](https://img.shields.io/badge/web-histoomnist.cn-0A7B83)](https://histoomnist.cn/)
 [![Python](https://img.shields.io/badge/python-3.10-blue)](environment.yml)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green)](LICENSE)
 
@@ -16,6 +17,11 @@ mean(predicted SF within each slide) = 1
 ```
 
 ![Overview of the HistoOmniST workflow](docs/assets/histoomnist_workflow.png)
+
+## Web portal
+
+Explore the released TCGA virtual spatial atlas and submit H&E slides for
+online prediction at **[histoomnist.cn](https://histoomnist.cn/)**.
 
 ## Quick start
 
@@ -195,6 +201,7 @@ must not be reported as formal benchmark results.
 | HEST-1k preparation and model training | [Training](docs/training.md) |
 | Ten-method evaluation | [Benchmark workflow](docs/benchmark.md) |
 | Frozen model files | [Model release v0.1.0](https://github.com/StickTaTa/HistoOmniST/releases/tag/v0.1.0) |
+| Online atlas and H&E prediction | [HistoOmniST web portal](https://histoomnist.cn/) |
 
 ## Repository layout
 

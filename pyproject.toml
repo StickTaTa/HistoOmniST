@@ -49,7 +49,7 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/StickTaTa/HistoOmniST"
+Homepage = "https://histoomnist.cn/"
 Repository = "https://github.com/StickTaTa/HistoOmniST"
 
 [project.scripts]
