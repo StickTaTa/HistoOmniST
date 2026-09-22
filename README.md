@@ -6,22 +6,54 @@
 [![Python](https://img.shields.io/badge/python-3.10-blue)](environment.yml)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-green)](LICENSE)
 
-**HistoOmniST predicts spatial gene expression from H&E histology and
-reconstructs count-scale virtual spatial transcriptomes.** It predicts
-expression rate and a mean-one, slide-normalized size factor (SF) separately,
-then recombines them at each spot or tissue tile.
+**HistoOmniST reconstructs slide-relative count-scale virtual spatial
+transcriptomes from routine H&E histology.** It predicts gene-specific
+expression rate and a mean-one, slide-normalized size factor (SF) with separate
+models, then recombines them at each spot or tissue tile.
 
 ```text
 predicted count[i, g] = predicted rate[i, g] x predicted SF[i]
 mean(predicted SF within each slide) = 1
 ```
 
-![Overview of the HistoOmniST workflow](docs/assets/histoomnist_workflow.png)
+The reconstructed count scale is relative to the valid tissue locations within
+each slide. It is not an estimate of absolute molecule number or a correction
+for sequencing-depth differences between slides.
+
+![HistoOmniST framework, HEST-1k evaluation and frozen deployment](docs/assets/histoomnist_workflow.png)
+
+The overview figure follows the current manuscript Fig. 1. It shows the full
+path from H&E features to rate and SF prediction, count-scale reconstruction,
+HEST-1k validation, virtual spatial outputs, TCGA deployment and the breast
+cancer immune-proliferation application.
+
+## Manuscript-aligned scope
+
+The method has two distinct evaluation layers:
+
+- **Expression-rate prediction.** The HistoOmniST rate branch is compared with
+  nine external H&E-to-spatial methods on a common 16,942-gene, slide-held-out
+  HEST-1k target.
+- **Count-scale reconstruction.** With rate predictions held fixed, the
+  predicted SF branch is tested for its incremental contribution by comparing
+  rate alone, rate multiplied by predicted SF and rate multiplied by measured
+  SF. The formal method ranking is therefore a rate-target benchmark, whereas
+  SF utility is evaluated separately at count scale.
+
+The frozen rate and SF models were applied without TCGA refitting to 6,021
+usable whole-slide images and 7,915,046 tissue tiles across BRCA, COAD/READ and
+SKCM. The released atlas contains count-scale predictions for 28 prespecified
+genes and eight derived programs: epithelial, T cell, myeloid, stromal,
+proliferation, hypoxia, EMT/TGF and Wnt-like. These are virtual signals inferred
+from H&E images, not measured spatial transcriptomes or diagnostic annotations.
 
 ## Web portal
 
 Explore the released TCGA virtual spatial atlas and submit H&E slides for
-online prediction at **[histoomnist.cn](https://histoomnist.cn/)**.
+online prediction at **[histoomnist.cn](https://histoomnist.cn/)**. The main
+entry points are the [atlas browser](https://histoomnist.cn/slides.html), the
+[cohort explorer](https://histoomnist.cn/cohorts.html), and the
+[upload-prediction portal](https://histoomnist.cn/upload.html).
 
 ## Quick start
 
@@ -111,8 +143,8 @@ and `run_summary.json`.
 | `program_NAME` | Mean of available count-log1p genes in a prespecified program |
 
 The default inference panel contains 28 prespecified genes and eight programs:
-epithelial, T cell, myeloid, stromal, proliferation, hypoxia, EMT/TGF-beta and
-Wnt/CRC. Their exact definitions are in
+epithelial, T cell, myeloid, stromal, proliferation, hypoxia, EMT/TGF and
+Wnt-like. Their exact definitions are in
 [`configs/manuscript_release_28_gene_panel.json`](configs/manuscript_release_28_gene_panel.json).
 Other genes can be requested with `--selected-genes` when present in the
 16,942-gene expression checkpoint.
@@ -177,11 +209,14 @@ python scripts/evaluate_combined.py --help
 
 ### Ten-method benchmark
 
-The manuscript benchmark covers HistoOmniST, HiST, Hist2ST, HisToGene, iStar,
-mclSTExp, Path2Space, sCellST, STimage, ST-Net and THItoGene. This repository
-contains project-owned adapters, provenance records, fixed HEST splits and the
-common evaluator. It does not redistribute complete third-party repositories,
-their checkpoints or per-spot prediction bundles.
+The manuscript benchmark covers HistoOmniST and nine external methods:
+HisToGene, ST-Net, THItoGene, mclSTExp, iStar, sCellST, HiST, Path2Space and
+STimage. This repository contains project-owned adapters, provenance records,
+fixed HEST splits and the common evaluator. Hist2ST was assessed separately but
+was excluded from the formal table because its source-faithful full-slide
+configuration failed the largest-slide memory gate without changing the method
+or truncating spots. The repository does not redistribute complete third-party
+repositories, their checkpoints or per-spot prediction bundles.
 
 ```bash
 python scripts/hest_evaluate_benchmark_predictions.py --help
